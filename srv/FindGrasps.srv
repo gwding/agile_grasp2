@@ -1,0 +1,34 @@
+# A service call for detecting grasps in a point cloud.
+
+# The request send to the service
+
+# signals the server to find grasps
+#  0: samples are drawn from the complete point cloud
+#  1: samples are drawn from an r-ball
+#  2: samples are given by indices (see below)
+int32 grasps_signal
+
+# number of samples used to find robot hand poses
+#  0: uses the num_samples parameter from the launch file
+int32 num_samples
+
+# minimum number of inliers required for a handle
+#  0: uses the min_handle_inliers parameter from the launch file
+int32 min_handle_inliers
+
+# if antipodal grasps are calculated directly (if false, prediction is used)
+bool calculate_antipodal
+
+# if grasps_signal is set to 1, samples are drawn from a <radius>-ball centered at <centroid>
+geometry_msgs/Vector3 centroid
+float32 radius
+
+# if grasps_signal is set to 2, samples are given by indices
+int64[] indices
+
+
+---
+
+
+# The response returned by the service
+agile_grasp2/GraspListMsg grasps_msg # list of grasps

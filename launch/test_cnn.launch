@@ -1,0 +1,47 @@
+<launch>
+	<node name="test_cnn" pkg="agile_grasp2" type="test_cnn" output="screen">
+<!--
+  <param name="cloud_file_name" value="/home/andreas/data/active/570.pcd" />
+-->
+<!--
+    <param name="cloud_file_name" value="/home/andreas/data/base/003_base.pcd" />
+-->
+    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train0" /> 
+<!--
+    <param name="cloud_file_name" value="/home/baxter/data/003_base.pcd" /> 
+-->
+<!--
+    <param name="cloud_file_name" value="/home/baxter/data/mlaffordance/training/train0" />  
+-->
+    <param name="num_samples" value="1000" />
+    <param name="num_threads" value="2" />
+    <rosparam param="workspace"> [0.67, 10, -0.3, 10, -0.18, 0.1] </rosparam>
+<!--
+  <rosparam param="workspace"> [0.55, 0.85, -0.1, 0.1, -0.24, 1] </rosparam>
+-->
+    <rosparam param="camera_pose"> [0, 0.445417, 0.895323, 0.215, 
+              1, 0, 0, -0.015, 
+              0, 0.895323, -0.445417, 0.23, 
+              0, 0, 0, 1] </rosparam>
+    
+    <param name="forces_PSD" value="false" />
+    <param name="plotting" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="uses_NARF" value="false" />
+    <param name="antipodal_mode" value="0" /> <!-- 0: predict antipodal graps, 1/2: calculate antipodal grasps -->
+    <param name="plot_normals" value="false" />
+    <param name="use_inliers" value="false" />
+    <param name="save_hypotheses" value="false" />
+    
+    <!-- Classifier -->
+    <param name="images_directory" value="/home/andreas/data/grasp_images/" />
+    <param name="model_file" value="$(find agile_grasp)/caffe/test_1batch2.prototxt" />
+    <param name="trained_file" value="$(find agile_grasp)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
+    <param name="label_file" value="$(find agile_grasp)/caffe/labels.txt" />
+    <param name="min_score_diff" value="500" />
+    
+    <!-- Cluster -->    
+    <param name="min_inliers" value="3" />
+    <param name="min_handle_length" value="0.005" />
+    <param name="reuse_inliers" value="true" />
+	</node>
+</launch>
