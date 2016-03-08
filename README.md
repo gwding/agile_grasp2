@@ -2,7 +2,7 @@
 
 * **Author:** Andreas ten Pas (atp@ccs.neu.edu)
 * **Version:** 1.0.0
-* **ROS Wiki page:** n.a.
+* **ROS Wiki page:** not available yet
 * **Author's website:** [http://www.ccs.neu.edu/home/atp/](http://www.ccs.neu.edu/home/atp/)
 
 
@@ -15,9 +15,6 @@ version of our previous package, [agile_grasp](http://wiki.ros.org/agile_grasp).
 
 The package already comes with pre-trained machine learning classifiers and can be used (almost) out-of-the-box with 
 RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as point clouds stored as *.pcd files.
-
-The video below shows our package running on a Baxter robot. 
-**TODO: add YT link**
 
 
 ## 2) Requirements
