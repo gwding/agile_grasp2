@@ -19,9 +19,10 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
 
 ## 2) Requirements
 
-1. [Lapack](http://www.netlib.org/lapack/) (install in Ubuntu: `$ sudo apt-get install liblapack-dev`) 
-2. [OpenNI](http://wiki.ros.org/openni_launch) or a similar range sensor driver
-3. [Caffe](http://caffe.berkeleyvision.org/) 
+1. [ROS Indigo](http://wiki.ros.org/indigo) (installation instructions for [Ubuntu](http://wiki.ros.org/indigo/Installation/Ubuntu))
+2. [Lapack](http://www.netlib.org/lapack/) (install in Ubuntu: `$ sudo apt-get install liblapack-dev`) 
+3. [OpenNI](http://wiki.ros.org/openni_launch) or a similar range sensor driver
+4. [Caffe](http://caffe.berkeleyvision.org/) 
 
 
 ## 3) Installation
