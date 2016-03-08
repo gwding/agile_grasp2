@@ -28,20 +28,24 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
 
 1. Install Caffe. [Instructions](https://github.com/BVLC/caffe/wiki/Install-Caffe-on-EC2-from-scratch-%28Ubuntu,-CUDA-7,-cuDNN%29) for Ubuntu 14.04. 
 2. Compile Caffe as a cmake library ([https://github.com/BVLC/caffe/pull/1667](instructions)):
+
    ```
    $ cd caffe && mkdir cmake_build && cd cmake_build
    $ cmake .. -DBUILD_SHARED_LIB=ON
    $ make -j 12
    $ ln -s ../build .
    ```
+   
    If the first line gives the error *Manually-specified variables were not used by the project: BUILD_SHARED_LIB*, 
    just run the first line again.
 3. Clone the agile_grasp 2.0 repository into your ros workspace: 
+
    ```
    $ cd <location_of_your_ros_workspace>/src
    $ git clone https://github.com/atenpas/agile_grasp2
    ```
 4. Recompile your ROS workspace: 
+
    ```
    $ cd ..
    $ catkin_make
@@ -53,6 +57,7 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
 1. Connect a range sensor, such as a Microsoft Kinect or Asus Xtion Pro, to your robot.
 2. Adjust the file *robot_detect_grasps.launch* for your sensor and robot hand.
 3. Run the grasp pose detection: 
+   
    ```
    $ roslaunch agile_grasp2 robot_detect_grasps.launch
    ```
@@ -66,6 +71,7 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
 1. Have a *.pcd file available. Let's say it's located at */home/user/cloud.pcd*. 
 2. Change the parameter *cloud_file_name* in the file *file_detect_grasps.launch* to */home/user/cloud.pcd*.
 3. Detect grasp poses: 
+  
    ```
    roslaunch agile_grasp2 file_detect_grasps.launch
    ```
