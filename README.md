@@ -83,5 +83,11 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
 
 If you like this package and use it in your own work, please cite our [arXiv paper](http://arxiv.org/abs/1603.01564):
 
-Marcus Gualtieri, Andreas ten Pas, Kate Saenko, and Robert Platt. **High precision grasp pose detection in dense 
-clutter**. March 2016.  
+```
+@misc{1603.01564,
+Author = {Marcus Gualtieri and Andreas ten Pas and Kate Saenko and Robert Platt},
+Title = {High precision grasp pose detection in dense clutter},
+Year = {2016},
+Eprint = {arXiv:1603.01564},
+} 
+```
