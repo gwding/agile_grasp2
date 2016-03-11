@@ -5,7 +5,7 @@
     <param name="use_service" value="false" />
     <param name="cloud_topic" value="/cloud_indexed" />        
     <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
-    <param name="only_plot_output" value="false" />
+    <param name="only_plot_output" value="true" />
     <param name="save_hypotheses" value="false" />
       
     <!-- Hand Search -->

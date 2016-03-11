@@ -168,7 +168,7 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
 
   Plot plotter;
 
-  if (indices_.size() > 0)
+  if (!only_plot_output_ && plot_mode_ == PCL && indices_.size() > 0)
   {
     plotter.plotSamples(indices_, cloud_cam.getCloudOriginal());
   }
@@ -228,16 +228,16 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
       }
     }
     ROS_INFO_STREAM("# grasps within gripper width range and workspace: " << hands_filtered.size());
-  //  if (!only_plot_output_ && plot_mode_ == PCL)
-  //  {
-  //    plotter.plotHands(hands, cloud_cam.getCloudOriginal(), "Grasp Hypotheses");
-  //    plotter.plotHands(hands_filtered, cloud_cam.getCloudProcessed(),
-  //      "Grasp Hypotheses Within Width Limits And After Finger Pruning");
-  //  }
   }
   else
   {
     hands_filtered = hands;
+  }
+
+  if (!only_plot_output_ && plot_mode_ == PCL)
+  {
+    plotter.plotHands(hands_filtered, cloud_cam.getCloudProcessed(),
+      "Grasp Hypotheses Within Gripper Width Limits And After Finger Pruning");
   }
 
 
