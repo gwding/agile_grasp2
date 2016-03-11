@@ -55,7 +55,7 @@
 #include <agile_grasp2/plot.h>
 
 // custom messages
-//#include <agile_grasp2/CloudIndexed.h>
+#include <agile_grasp2/CloudIndexed.h>
 #include <agile_grasp2/CloudSized.h>
 #include <agile_grasp2/GraspMsg.h>
 #include <agile_grasp2/GraspListMsg.h>
@@ -114,6 +114,12 @@ private:
   */
   void cloud_sized_callback(const agile_grasp2::CloudSized& msg);
 
+  /**
+   * \brief Callback function for the ROS topic that contains the input point cloud.
+   * \param msg the incoming ROS message (of type agile_grasp2/CloudSized)
+  */
+  void cloud_indexed_callback(const agile_grasp2::CloudIndexed& msg);
+
   agile_grasp2::GraspListMsg createGraspListMsg(const std::vector<Handle>& handles);
 
   agile_grasp2::GraspListMsg createGraspListMsg(const std::vector<GraspHypothesis>& hands);
@@ -125,6 +131,7 @@ private:
   ros::Subscriber cloud_sub_;
   ros::Publisher grasps_pub_;
   ros::ServiceServer grasps_service_;
+  std::vector<int> indices_;
 
   Classifier* classifier_;
   Learning* learning_;
@@ -159,12 +166,6 @@ private:
   static const int ALL_POINTS = 0; ///< service uses all points in the cloud
   static const int RADIUS = 1; ///< service uses all points within a radius given in the request
   static const int INDICES = 2; ///< service uses all points which are contained in an index list given in the request
-
-    //  /**
-//	 * \brief Callback function for the ROS topic that contains the input point cloud.
-//	 * \param msg the incoming ROS message (of type agile_grasp2/CloudSized)
-//	*/
-//  void cloud_indexed_callback(const agile_grasp2::CloudIndexed& msg);
 };
 
 #endif /* GRASP_DETECTION_NODE_H_ */

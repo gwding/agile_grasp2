@@ -4,6 +4,8 @@
 GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false), has_normals_(false),
   cloud_(new PointCloudRGBA), cloud_normals_(new PointCloudNormal), voxel_size_(0.003), size_left_cloud_(0)
 {
+  indices_.resize(0);
+
   // read environment parameters
   node.getParam("workspace", workspace_);
   node.getParam("camera_pose", camera_pose_);
@@ -22,6 +24,8 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
       cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_callback, this);
     else if (cloud_type == CLOUD_SIZED)
       cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_sized_callback, this);
+    else if (cloud_type == CLOUD_INDEXED)
+      cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_indexed_callback, this);
 
     bool use_service;
     node.param("use_service", use_service, false);
@@ -164,6 +168,11 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
 
   Plot plotter;
 
+  if (indices_.size() > 0)
+  {
+    plotter.plotSamples(indices_, cloud_cam.getCloudOriginal());
+  }
+
   // camera poses for 2-camera Baxter setup
   Eigen::Matrix4d base_tf, sqrt_tf;
 
@@ -193,35 +202,43 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
 //  plotter.drawCloud(cloud_cam.getCloudProcessed(), "Workspace Filtered Cloud");
 
   // 2. Prune on aperture and fingers below table surface.
-  Eigen::VectorXd ws(6);
-  ws << workspace_[0] + 0.04, workspace_[1] - 0.02, workspace_[2] + 0.03, workspace_[3] - 0.03, workspace_[4],
-    workspace_[5];
   std::vector<GraspHypothesis> hands_filtered;
-  for (int i = 0; i < hands.size(); ++i)
+  if (indices_.size() == 0)
   {
-    double width = hands[i].getGraspWidth();
-    Eigen::Vector3d left_bottom = hands[i].getGraspBottom() + 0.5 * width * hands[i].getBinormal();
-    Eigen::Vector3d right_bottom = hands[i].getGraspBottom() - 0.5 * width * hands[i].getBinormal();
-    Eigen::Vector3d left_top = hands[i].getGraspTop() + 0.5 * width * hands[i].getBinormal();
-    Eigen::Vector3d right_top = hands[i].getGraspTop() - 0.5 * width * hands[i].getBinormal();
-    Eigen::Vector4d z;
-    z << left_bottom(2), right_bottom(2), left_top(2), right_top(2), hands[i].getGraspBottom()(2);
+    Eigen::VectorXd ws(6);
+    ws << workspace_[0] + 0.04, workspace_[1] - 0.02, workspace_[2] + 0.03, workspace_[3] - 0.03, workspace_[4],
+      workspace_[5];
 
-    if (hands[i].getGraspWidth() >= min_aperture_ && hands[i].getGraspWidth() <= max_aperture_
-      && z.minCoeff() >= ws(4) && z.maxCoeff() <= ws(5)
-      && left_bottom(0) >= ws(0) && left_bottom(0) <= ws(1)
-      && left_bottom(1) >= ws(2) && left_bottom(1) <= ws(3))
+    for (int i = 0; i < hands.size(); ++i)
     {
-      hands_filtered.push_back(hands[i]);
+      double width = hands[i].getGraspWidth();
+      Eigen::Vector3d left_bottom = hands[i].getGraspBottom() + 0.5 * width * hands[i].getBinormal();
+      Eigen::Vector3d right_bottom = hands[i].getGraspBottom() - 0.5 * width * hands[i].getBinormal();
+      Eigen::Vector3d left_top = hands[i].getGraspTop() + 0.5 * width * hands[i].getBinormal();
+      Eigen::Vector3d right_top = hands[i].getGraspTop() - 0.5 * width * hands[i].getBinormal();
+      Eigen::Vector4d z;
+      z << left_bottom(2), right_bottom(2), left_top(2), right_top(2), hands[i].getGraspBottom()(2);
+
+      if (hands[i].getGraspWidth() >= min_aperture_ && hands[i].getGraspWidth() <= max_aperture_
+        && z.minCoeff() >= ws(4) && z.maxCoeff() <= ws(5)
+        && left_bottom(0) >= ws(0) && left_bottom(0) <= ws(1)
+        && left_bottom(1) >= ws(2) && left_bottom(1) <= ws(3))
+      {
+        hands_filtered.push_back(hands[i]);
+      }
     }
+    ROS_INFO_STREAM("# grasps within gripper width range and workspace: " << hands_filtered.size());
+  //  if (!only_plot_output_ && plot_mode_ == PCL)
+  //  {
+  //    plotter.plotHands(hands, cloud_cam.getCloudOriginal(), "Grasp Hypotheses");
+  //    plotter.plotHands(hands_filtered, cloud_cam.getCloudProcessed(),
+  //      "Grasp Hypotheses Within Width Limits And After Finger Pruning");
+  //  }
   }
-  ROS_INFO_STREAM("# grasps within gripper width range and workspace: " << hands_filtered.size());
-//  if (!only_plot_output_ && plot_mode_ == PCL)
-//  {
-//    plotter.plotHands(hands, cloud_cam.getCloudOriginal(), "Grasp Hypotheses");
-//    plotter.plotHands(hands_filtered, cloud_cam.getCloudProcessed(),
-//      "Grasp Hypotheses Within Width Limits And After Finger Pruning");
-//  }
+  else
+  {
+    hands_filtered = hands;
+  }
 
 
   // 3. Predict or extract antipodal grasps.
@@ -305,21 +322,35 @@ void GraspDetectionNode::preprocessPointCloud(const std::vector<double>& workspa
 {
   std::cout << "Processing cloud with: " << cloud_cam.getCloudOriginal()->size() << " points.\n";
 
-  // 1. Workspace filtering
-  Eigen::VectorXd ws(6);
-  ws << workspace[0], workspace[1], workspace[2], workspace[3], workspace[4], workspace[5];
-  cloud_cam.filterWorkspace(ws);
-  std::cout << "After workspace filtering: " << cloud_cam.getCloudProcessed()->size() << " points left.\n";
+  if (indices_.size() == 0)
+  {
+    // 1. Workspace filtering
+    Eigen::VectorXd ws(6);
+    ws << workspace[0], workspace[1], workspace[2], workspace[3], workspace[4], workspace[5];
+    cloud_cam.filterWorkspace(ws);
+    std::cout << "After workspace filtering: " << cloud_cam.getCloudProcessed()->size() << " points left.\n";
 
-  // 2. Voxelization
-  cloud_cam.voxelizeCloud(voxel_size);
-  std::cout << "After voxelization: " << cloud_cam.getCloudProcessed()->size() << " points left.\n";
+    // 2. Voxelization
+    cloud_cam.voxelizeCloud(voxel_size);
+    std::cout << "After voxelization: " << cloud_cam.getCloudProcessed()->size() << " points left.\n";
 
-  // 3. Subsampling
-  cloud_cam.subsampleUniformly(num_samples);
-
-  //  plotter.drawCloud(cloud_cam.getCloudOriginal(), "Original Cloud");
-  //  plotter.drawCloud(cloud_cam.getCloudProcessed(), "Processed Cloud");
+    // 3. Subsampling
+    cloud_cam.subsampleUniformly(num_samples);
+  }
+  else
+  {
+    if (num_samples < cloud_cam.getCloudOriginal()->size())
+    {
+      std::vector<int> indices_rand(num_samples);
+      for (int i=0; i < num_samples; i++)
+        indices_rand[i] = indices_[rand() % indices_.size()];
+      cloud_cam.setSampleIndices(indices_rand);
+    }
+    else
+    {
+      cloud_cam.setSampleIndices(indices_);
+    }  
+  }
 }
 
 
@@ -421,6 +452,31 @@ void GraspDetectionNode::cloud_sized_callback(const agile_grasp2::CloudSized& ms
     has_cloud_ = true;
     ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points (left: ) " << size_left_cloud_ << ", right: "
       << cloud_->points.size() - size_left_cloud_);
+  }
+}
+
+
+void GraspDetectionNode::cloud_indexed_callback(const agile_grasp2::CloudIndexed& msg)
+{
+  if (!has_cloud_)
+  {
+    if (msg.cloud.fields.size() == 6 && msg.cloud.fields[3].name == "normal_x" && msg.cloud.fields[4].name == "normal_y"
+      && msg.cloud.fields[3].name == "normal_x")
+    {
+      pcl::fromROSMsg(msg.cloud, *cloud_normals_);
+      has_normals_ = true;
+    }
+    else
+    {
+      pcl::fromROSMsg(msg.cloud, *cloud_);
+    }
+
+    size_left_cloud_ = cloud_->size();
+    indices_.resize(msg.indices.size());
+    for (int i=0; i < indices_.size(); i++)
+      indices_[i] = msg.indices[i].data;
+    has_cloud_ = true;
+    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points and " << indices_.size() << " indices\n");
   }
 }
 

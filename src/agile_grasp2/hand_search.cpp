@@ -269,6 +269,7 @@ std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_
 #endif
   for (std::size_t i = 0; i < quadric_list.size(); i++)
   {
+    // std::cout << i << "\n";
     pcl::PointXYZRGBA sample;
     sample.x = quadric_list[i].getSample()(0);
     sample.y = quadric_list[i].getSample()(1);

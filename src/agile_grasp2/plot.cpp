@@ -120,15 +120,17 @@ void Plot::plotSamples(const std::vector<int>& index_list, const PointCloudRGBA:
 
 void Plot::plotSamples(const PointCloudRGBA::Ptr& samples_cloud, const PointCloudRGBA::Ptr& cloud)
 {
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = createViewer("Samples");  
-	viewer->addPointCloud<pcl::PointXYZRGBA>(cloud, "registered point cloud");
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = createViewer("Samples");
+
+  // draw the point cloud
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> rgb(cloud);
+	viewer->addPointCloud<pcl::PointXYZRGBA>(cloud, rgb, "registered point cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "registered point cloud");
-  viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.8, 0.0, 
-    "registered point cloud");
+
+	// draw the samples
 	viewer->addPointCloud<pcl::PointXYZRGBA>(samples_cloud, "samples cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "samples cloud");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0,
-		"samples cloud");
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "samples cloud");
 
 	runViewer(viewer);
 }
@@ -201,8 +203,8 @@ void Plot::plotCameraSource(const Eigen::VectorXi& pts_cam_source_in, const Poin
 }
 
 
-PointCloudNormal::Ptr Plot::createNormalsCloud(
-	const std::vector<GraspHypothesis>& hand_list, bool plots_only_antipodal, bool plots_grasp_bottom)
+PointCloudNormal::Ptr Plot::createNormalsCloud(const std::vector<GraspHypothesis>& hand_list,
+  bool plots_only_antipodal, bool plots_grasp_bottom)
 {
 	PointCloudNormal::Ptr cloud(new PointCloudNormal);
 
@@ -315,6 +317,7 @@ void Plot::createVisualPublishers(ros::NodeHandle& node, double marker_lifetime)
   handles_pub_ = node.advertise<visualization_msgs::MarkerArray>("handles_visual", 10);
   marker_lifetime_ = marker_lifetime;
 }
+
 
 void Plot::plotGraspsRviz(const std::vector<GraspHypothesis>& hand_list, const std::string& frame, bool is_antipodal)
 {  
