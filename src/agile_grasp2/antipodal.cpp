@@ -7,7 +7,8 @@ const int Antipodal::FULL_GRASP = 2; // normals point towards both fingers
 
 int Antipodal::evaluateGrasp(const Eigen::Matrix3Xd& pts, const Eigen::Matrix3Xd& normals, double extremal_thresh)
 {
-  double friction_coeff = 20.0; // angle of friction cone in degrees
+//  double friction_coeff = 20.0; // angle of friction cone in degrees
+  double friction_coeff = 30.0; // angle of friction cone in degrees
   
   // calculate extremal points
   Eigen::Array<bool,1,Eigen::Dynamic> left_extremal = pts.row(0).array() < (pts.row(0).minCoeff() + extremal_thresh);
@@ -21,8 +22,8 @@ int Antipodal::evaluateGrasp(const Eigen::Matrix3Xd& pts, const Eigen::Matrix3Xd
   Eigen::Array<bool,1,Eigen::Dynamic> left_close_direction = (l.transpose() * normals).array() > cos_friction_coeff;
   Eigen::Array<bool,1,Eigen::Dynamic> right_close_direction = (r.transpose() * normals).array() > cos_friction_coeff;
   
-  // std::cout << left_extremal.count() << " " << right_extremal.count() << "\n";
-  // std::cout << left_close_direction.count() << " " << right_close_direction.count() << "\n";
+//  std::cout << "extremal_count: " << left_extremal.count() << ", " << right_extremal.count(); // << "\n";
+//  std::cout << ". points within <friction-coeff> of closing direction: "  << left_close_direction.count() << ", " << right_close_direction.count() << "\n";
   
   // select points that are extremal and have their surface normal within the friction cone of the closing direction  
   std::vector<int> left_idx_viable, right_idx_viable;
@@ -38,11 +39,13 @@ int Antipodal::evaluateGrasp(const Eigen::Matrix3Xd& pts, const Eigen::Matrix3Xd
     if (right_close_direction(i) && right_extremal(i))
       right_idx_viable.push_back(i);
   }
-  // std::cout << "left_idx_viable.size: " << left_idx_viable.size() << ", right_idx_viable.size(): " << right_idx_viable.size() << "\n";
+//  std::cout << "left_idx_viable.size: " << left_idx_viable.size() << ", right_idx_viable.size(): " << right_idx_viable.size() << "\n";
   
   // if there are viable points on both sides
   if (left_idx_viable.size() > 0 && right_idx_viable.size() > 0)
   {
+//    std::cout << "left_idx_viable.size: " << left_idx_viable.size() << ", right_idx_viable.size(): " << right_idx_viable.size() << "\n";
+
     Eigen::Matrix3Xd left_pts_viable(3, left_idx_viable.size()), right_pts_viable(3, right_idx_viable.size());
     for (int i=0; i < left_idx_viable.size(); i++)
     {

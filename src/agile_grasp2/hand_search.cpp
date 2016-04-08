@@ -411,6 +411,8 @@ std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& p
         if (antipodal_method_ == NEW_ANTIPODAL)
         {
           Antipodal antipodal;
+//          hand.setFullAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.002));
+//          hand.setHalfAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.003));
           hand.setFullAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.002));
           hand.setHalfAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.003));
         }

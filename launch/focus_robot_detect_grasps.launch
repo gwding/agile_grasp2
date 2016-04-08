@@ -1,7 +1,7 @@
 <launch>
 	<node name="detect_grasps" pkg="agile_grasp2" type="detect_grasps" output="screen">
     <!-- Input Point Cloud -->
-    <param name="cloud_type" value="3" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
+    <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
     <param name="use_service" value="false" />
     <param name="cloud_topic" value="/cloud_indexed" />        
     <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
@@ -9,7 +9,7 @@
     <param name="save_hypotheses" value="false" />
       
     <!-- Hand Search -->
-    <rosparam param="workspace"> [0.57, 0.87, -0.2, 0.15, -0.25, 1] </rosparam>
+    <rosparam param="workspace"> [0.47, 0.87, -0.3, 0.3, -0.28, 1] </rosparam>
     <rosparam param="camera_pose"> [0, 0.445417,  0.895323,  0.215, 
                                     1, 0,         0,        -0.015, 
                                     0, 0.895323, -0.445417,  0.23, 

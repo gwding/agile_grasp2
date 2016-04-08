@@ -149,9 +149,22 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPosesInFile(const st
 
 std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPosesInTopic()
 {
-  CloudCamera cloud_cam(cloud_, size_left_cloud_);
-  preprocessPointCloud(workspace_, voxel_size_, num_samples_, cloud_cam);
-  return detectGraspPoses(cloud_cam);
+  CloudCamera* cloud_cam;
+
+  // cloud with surface normals
+  if (has_normals_)
+    cloud_cam = new CloudCamera(cloud_normals_, size_left_cloud_);
+  // cloud without surface normals
+  else
+    cloud_cam = new CloudCamera(cloud_, size_left_cloud_);
+
+  preprocessPointCloud(workspace_, voxel_size_, num_samples_, *cloud_cam);
+
+  std::vector<GraspHypothesis> hands = detectGraspPoses(*cloud_cam);
+
+  delete cloud_cam;
+
+  return hands;
 }
 
 
@@ -271,6 +284,8 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
   }
   else
   {
+    std::cout << "Extracting antipodal grasps ...\n";
+
     for (int i = 0; i < hands_filtered.size(); i++)
     {
       if (hands_filtered[i].isFullAntipodal())
@@ -425,10 +440,21 @@ void GraspDetectionNode::cloud_callback(const sensor_msgs::PointCloud2ConstPtr& 
 {
   if (!has_cloud_)
   {
-    pcl::fromROSMsg(*msg, *cloud_);
-    size_left_cloud_ = cloud_->size();
+    if (msg->fields.size() == 6 && msg->fields[3].name == "normal_x" && msg->fields[4].name == "normal_y"
+      && msg->fields[5].name == "normal_z")
+    {
+      pcl::fromROSMsg(*msg, *cloud_normals_);
+      size_left_cloud_ = cloud_normals_->size();
+      has_normals_ = true;
+    }
+    else
+    {
+      pcl::fromROSMsg(*msg, *cloud_);
+      size_left_cloud_ = cloud_->size();
+    }
+
     has_cloud_ = true;
-    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points");
+    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points.");
   }
 }
 
@@ -438,7 +464,7 @@ void GraspDetectionNode::cloud_sized_callback(const agile_grasp2::CloudSized& ms
   if (!has_cloud_)
   {
     if (msg.cloud.fields.size() == 6 && msg.cloud.fields[3].name == "normal_x" && msg.cloud.fields[4].name == "normal_y"
-      && msg.cloud.fields[3].name == "normal_x")
+      && msg.cloud.fields[5].name == "normal_z")
     {
       pcl::fromROSMsg(msg.cloud, *cloud_normals_);
       has_normals_ = true;
@@ -450,7 +476,7 @@ void GraspDetectionNode::cloud_sized_callback(const agile_grasp2::CloudSized& ms
 
     size_left_cloud_ = msg.size_left.data;
     has_cloud_ = true;
-    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points (left: ) " << size_left_cloud_ << ", right: "
+    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points (left, right): " << size_left_cloud_ << ", "
       << cloud_->points.size() - size_left_cloud_);
   }
 }
@@ -461,7 +487,7 @@ void GraspDetectionNode::cloud_indexed_callback(const agile_grasp2::CloudIndexed
   if (!has_cloud_)
   {
     if (msg.cloud.fields.size() == 6 && msg.cloud.fields[3].name == "normal_x" && msg.cloud.fields[4].name == "normal_y"
-      && msg.cloud.fields[3].name == "normal_x")
+      && msg.cloud.fields[5].name == "normal_z")
     {
       pcl::fromROSMsg(msg.cloud, *cloud_normals_);
       has_normals_ = true;
@@ -476,7 +502,8 @@ void GraspDetectionNode::cloud_indexed_callback(const agile_grasp2::CloudIndexed
     for (int i=0; i < indices_.size(); i++)
       indices_[i] = msg.indices[i].data;
     has_cloud_ = true;
-    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points and " << indices_.size() << " indices\n");
+    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points (left, right): " << size_left_cloud_ << ", "
+      << cloud_->points.size() - size_left_cloud_);
   }
 }
 
