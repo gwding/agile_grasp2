@@ -407,33 +407,11 @@ std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& p
         GraspHypothesis hand(axis, approach, binormal, grasp_pos.col(0), grasp_pos.col(1), grasp_pos.col(2),
           grasp_width, points_in_box, normals_in_box, cam_source_in_box);
 
-        // use the "new" antipodal condition
-        if (antipodal_method_ == NEW_ANTIPODAL)
-        {
-          Antipodal antipodal;
-//          hand.setFullAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.002));
-//          hand.setHalfAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.003));
-          hand.setFullAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.002));
-          hand.setHalfAntipodal(antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.003));
-        }
-        // use the "old" antipodal condition
-        else if (antipodal_method_ == OLD_ANTIPODAL)
-        {
-          Antipodal antipodal;
-          int antipodal_type = antipodal.evaluateGrasp(normals_in_box, 20, 20);
-          if (antipodal_type == Antipodal::FULL_GRASP)
-          {
-            hand.setHalfAntipodal(true);
-            hand.setFullAntipodal(true);
-          }
-          else if (antipodal_type == Antipodal::HALF_GRASP)
-            hand.setHalfAntipodal(true);
-        }
-        else
-        {
-          hand.setHalfAntipodal(false);
-          hand.setFullAntipodal(false);
-        }
+        // evaluate if the grasp is antipodal
+        Antipodal antipodal;
+        int antipodal_result = antipodal.evaluateGrasp(points_in_box, normals_in_box, 0.003);
+        hand.setHalfAntipodal(antipodal_result == Antipodal::HALF_GRASP || antipodal_result == Antipodal::FULL_GRASP);
+        hand.setFullAntipodal(antipodal_result == Antipodal::FULL_GRASP);
 
         hand_list.push_back(hand);
       }

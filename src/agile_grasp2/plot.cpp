@@ -261,8 +261,7 @@ void Plot::plotHandsHelper(const PointCloudNormal::Ptr& hands_cloud,
 	const PointCloudNormal::Ptr& antipodal_hands_cloud, const PointCloudRGBA::Ptr& cloud,
 	std::string str, bool use_grasp_bottom)
 {
-	std::cout << "Drawing " << hands_cloud->size() << " grasps of which " << antipodal_hands_cloud->size()
-			<< " are antipodal grasps.\n";
+	std::cout << "Drawing " << hands_cloud->size() << " grasps\n";
 
 	std::string title = "Hands: " + str;
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = createViewer(title);

@@ -214,7 +214,7 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
   }
 //  plotter.drawCloud(cloud_cam.getCloudProcessed(), "Workspace Filtered Cloud");
 
-  // 2. Prune on aperture and fingers below table surface.
+  // 2. Prune on half-grasps, hand aperture and fingers below table surface.
   std::vector<GraspHypothesis> hands_filtered;
   if (indices_.size() == 0)
   {
@@ -224,20 +224,23 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
 
     for (int i = 0; i < hands.size(); ++i)
     {
-      double width = hands[i].getGraspWidth();
-      Eigen::Vector3d left_bottom = hands[i].getGraspBottom() + 0.5 * width * hands[i].getBinormal();
-      Eigen::Vector3d right_bottom = hands[i].getGraspBottom() - 0.5 * width * hands[i].getBinormal();
-      Eigen::Vector3d left_top = hands[i].getGraspTop() + 0.5 * width * hands[i].getBinormal();
-      Eigen::Vector3d right_top = hands[i].getGraspTop() - 0.5 * width * hands[i].getBinormal();
-      Eigen::Vector4d z;
-      z << left_bottom(2), right_bottom(2), left_top(2), right_top(2), hands[i].getGraspBottom()(2);
-
-      if (hands[i].getGraspWidth() >= min_aperture_ && hands[i].getGraspWidth() <= max_aperture_
-        && z.minCoeff() >= ws(4) && z.maxCoeff() <= ws(5)
-        && left_bottom(0) >= ws(0) && left_bottom(0) <= ws(1)
-        && left_bottom(1) >= ws(2) && left_bottom(1) <= ws(3))
+      if (hands[i].isHalfAntipodal() || hands[i].isFullAntipodal())
       {
-        hands_filtered.push_back(hands[i]);
+        double width = hands[i].getGraspWidth();
+        Eigen::Vector3d left_bottom = hands[i].getGraspBottom() + 0.5 * width * hands[i].getBinormal();
+        Eigen::Vector3d right_bottom = hands[i].getGraspBottom() - 0.5 * width * hands[i].getBinormal();
+        Eigen::Vector3d left_top = hands[i].getGraspTop() + 0.5 * width * hands[i].getBinormal();
+        Eigen::Vector3d right_top = hands[i].getGraspTop() - 0.5 * width * hands[i].getBinormal();
+        Eigen::Vector4d z;
+        z << left_bottom(2), right_bottom(2), left_top(2), right_top(2), hands[i].getGraspBottom()(2);
+
+        if (hands[i].getGraspWidth() >= min_aperture_ && hands[i].getGraspWidth() <= max_aperture_
+          && z.minCoeff() >= ws(4) && z.maxCoeff() <= ws(5)
+          && left_bottom(0) >= ws(0) && left_bottom(0) <= ws(1)
+          && left_bottom(1) >= ws(2) && left_bottom(1) <= ws(3))
+        {
+          hands_filtered.push_back(hands[i]);
+        }
       }
     }
     ROS_INFO_STREAM("# grasps within gripper width range and workspace: " << hands_filtered.size());

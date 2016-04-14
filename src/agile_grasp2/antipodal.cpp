@@ -10,6 +10,8 @@ int Antipodal::evaluateGrasp(const Eigen::Matrix3Xd& pts, const Eigen::Matrix3Xd
 //  double friction_coeff = 20.0; // angle of friction cone in degrees
   double friction_coeff = 30.0; // angle of friction cone in degrees
   
+  int result = NO_GRASP;
+
   // calculate extremal points
   Eigen::Array<bool,1,Eigen::Dynamic> left_extremal = pts.row(0).array() < (pts.row(0).minCoeff() + extremal_thresh);
   Eigen::Array<bool,1,Eigen::Dynamic> right_extremal = pts.row(0).array() > (pts.row(0).maxCoeff() - extremal_thresh);
@@ -41,6 +43,13 @@ int Antipodal::evaluateGrasp(const Eigen::Matrix3Xd& pts, const Eigen::Matrix3Xd
   }
 //  std::cout << "left_idx_viable.size: " << left_idx_viable.size() << ", right_idx_viable.size(): " << right_idx_viable.size() << "\n";
   
+
+  // if there are viable points on one side
+  if (left_idx_viable.size() > 0 || right_idx_viable.size() > 0)
+  {
+    result = HALF_GRASP;
+  }
+
   // if there are viable points on both sides
   if (left_idx_viable.size() > 0 && right_idx_viable.size() > 0)
   {
@@ -68,10 +77,10 @@ int Antipodal::evaluateGrasp(const Eigen::Matrix3Xd& pts, const Eigen::Matrix3Xd
     // std::cout << "bottom_viable_z: " << bottom_viable_z << "\n";
     
     if (top_viable_y > bottom_viable_y && top_viable_z > bottom_viable_z)
-      return FULL_GRASP;    
+      result = FULL_GRASP;
   }
-    
-  return NO_GRASP;
+
+  return result;
 }
 
 

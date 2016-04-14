@@ -1,18 +1,18 @@
 <launch>
 	<node name="detect_grasps_file" pkg="agile_grasp2" type="detect_grasps_file" output="screen">
     <param name="cloud_type" value="0" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
-    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train32.pcd" /> 
+    <param name="cloud_file_name" value="/home/baxter/data/000_base.pcd" /> 
     <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
     <param name="save_hypotheses" value="false" />
       
     <!-- Hand Search -->
-    <rosparam param="workspace"> [0.57, 0.87, -0.2, 0.15, -0.22, 1] </rosparam>
+    <rosparam param="workspace"> [0.47, 0.87, -0.2, 0.05, -0.26, 1] </rosparam>
     <rosparam param="camera_pose"> [0, 0.445417,  0.895323,  0.215, 
                                     1, 0,         0,        -0.015, 
                                     0, 0.895323, -0.445417,  0.23, 
                                     0, 0,         0,         1] </rosparam>
-    <param name="num_samples" value="2000" />
+    <param name="num_samples" value="8000" />
     <param name="num_threads" value="4" />
     <param name="nn_radius_taubin" value="0.01" />
     <param name="nn_radius_hands" value="0.1" />
