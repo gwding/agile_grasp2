@@ -106,7 +106,15 @@ void CloudCamera::filterWorkspace(const Eigen::VectorXd& workspace)
     camera_source(i) = camera_source_(indices[i]);
     cloud->points[i] = cloud_processed_->points[indices[i]];
   }
-
+  if (normals_.cols() > 0)
+  {
+    Eigen::Matrix3Xd normals(3, indices.size());
+    for (int i = 0; i < indices.size(); i++)
+    {
+      normals.col(i) = normals_.col(indices[i]);
+    }
+    normals_ = normals;
+  }
   cloud_processed_ = cloud;
   camera_source_ = camera_source;
 }

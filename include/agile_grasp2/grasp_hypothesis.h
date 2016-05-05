@@ -146,8 +146,8 @@ public:
 	}
 	
 	/**
-	 * \brief Return the grasp position between the end of the finger tips.
-	 * \return 3x1 grasp position between the end of the finger tips
+	 * \brief Return the the centered grasp position at the base of the robot hand.
+	 * \return 3x1 grasp position at the base of the robot hand
 	*/
 	const Eigen::Vector3d& getGraspBottom() const
 	{
@@ -253,7 +253,11 @@ public:
 		grasp_width_ = w;
 	}
 
-  const Eigen::Vector3d& getGraspTop() const
+	/**
+	* \brief Return the the centered grasp position between the fingertips of the robot hand.
+	* \return 3x1 grasp position between the fingertips
+	*/
+	const Eigen::Vector3d& getGraspTop() const
   {
     return grasp_top_;
   }

@@ -56,9 +56,9 @@ static std::vector<int> Argmax(const std::vector<float>& v, int N) {
 
 
 /* Return the predictions. */
-std::vector<Prediction> Classifier::Classify(const cv::Mat& img)
+std::vector<Prediction> Classifier::Classify(const cv::Mat& img, bool use_softmax)
 {
-  std::vector<float> output = Predict(img);
+  std::vector<float> output = Predict(img, use_softmax);
   std::vector<Prediction> predictions(output.size());
   for (int i = 0; i < output.size(); ++i)
   {
@@ -69,7 +69,7 @@ std::vector<Prediction> Classifier::Classify(const cv::Mat& img)
 }
 
 
-std::vector<float> Classifier::Predict(const cv::Mat& img)
+std::vector<float> Classifier::Predict(const cv::Mat& img, bool use_softmax)
 {
   Blob<float>* input_layer = net_->input_blobs()[0];
   input_layer->Reshape(1, num_channels_,
@@ -82,17 +82,44 @@ std::vector<float> Classifier::Predict(const cv::Mat& img)
 
   Preprocess(img, &input_channels);
 
-  net_->ForwardPrefilled();
+  const vector<Blob<float>*>& result = net_->ForwardPrefilled();
+//  std::cout << result.size() << "\n";
+//  const float* prob_vec = result[0]->cpu_data();
+//  std::cout << "prob_vec: " << prob_vec[0] << " " << prob_vec[1] << std::endl;
 
   /* Copy the output layer to a std::vector */
-//  const Blob<float>* output_layer = net_->output_blobs()[0];
-  const boost::shared_ptr<caffe::Blob<float> > output_layer = net_->blob_by_name("ip2");
+
+  boost::shared_ptr<caffe::Blob<float> > output_layer;
+  if (use_softmax)
+    output_layer = net_->blob_by_name("prob");
+  else
+    output_layer = net_->blob_by_name("ip2");
+//  const boost::shared_ptr<caffe::Blob<float> > output_layer = net_->blob_by_name("ip2");
 //  std::cout << output_layer->shape_string() << std::endl;
 //  std::cout << net_->blobs()[4]->shape_string() << std::endl;
 //  predictionProbs = net.blobs['ip2'].data[0].copy()
 //      prediction = net.blobs['ip2'].data[0].argmax(0)
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
+
+//  std::cout << "output_layer->cpu_data(): " << begin[0] << std::endl;
+//  std::cout << "output_layer->cpu_data(): " << begin[1] << std::endl;
+//  std::cout << "output_layer->cpu_data(): " << (1.0)/(1.0 + exp(-1.0*begin[0])) << std::endl;
+//  std::cout << "output_layer->cpu_data(): " << (1.0)/(1.0 + exp(-1.0*begin[1])) << std::endl;
+//
+//  const shared_ptr<Blob<float> >& probs = net_->blob_by_name("prob");
+//  const float* probs_out = probs->cpu_data();
+//  std::cout << "probs: " << probs_out[0] << " " << probs_out[1] << "\n";
+
+//  Blob<float>* outputs = net_->output_blobs()[0];
+//  const float* begin2 = output_layer->cpu_data();
+//  std::cout << "outputs->cpu_data(): " << begin2[0] << std::endl;
+//  std::cout << "outputs->cpu_data(): " << begin2[1] << std::endl;
+
+//  const float* data = output_layer->data();
+//  std::cout << "output_layer->data(): " << data[0] << std::endl;
+//  std::cout << "output_layer->data(): " << data[1] << std::endl;
+
   return std::vector<float>(begin, end);
 }
 

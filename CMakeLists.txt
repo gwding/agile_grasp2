@@ -57,10 +57,11 @@ set(CMAKE_CXX_FLAGS "-DNDEBUG -O3 -fopenmp -Wno-deprecated -Wenum-compare")
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate services in the 'srv' folder
-add_service_files(FILES FindGrasps.srv)
+add_service_files(FILES FindGrasps.srv Classify.srv)
 
 ## Generate messages in the 'msg' folder
-add_message_files(FILES CloudIndexed.msg CloudSized.msg GraspMsg.msg GraspListMsg.msg)
+add_message_files(FILES CloudIndexed.msg CloudSized.msg DensityGraspMsg.msg DensityGraspListMsg.msg GraspMsg.msg 
+  GraspListMsg.msg)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(DEPENDENCIES geometry_msgs sensor_msgs std_msgs)
@@ -121,6 +122,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_
 ## Declare a cpp library
 add_library(antipodal src/${PROJECT_NAME}/antipodal.cpp)
 add_library(caffe_classifier src/${PROJECT_NAME}/caffe_classifier.cpp)
+add_library(classification_node src/nodes/classification_node.cpp)
 add_library(cloud_camera src/${PROJECT_NAME}/cloud_camera.cpp)
 add_library(finger_hand src/${PROJECT_NAME}/finger_hand.cpp)
 add_library(grasp_detection_node src/nodes/grasp_detection_node.cpp)
@@ -133,6 +135,7 @@ add_library(plot src/${PROJECT_NAME}/plot.cpp)
 add_library(quadric src/${PROJECT_NAME}/quadric.cpp)
 
 ## Declare a cpp executable
+add_executable(classify_grasps src/nodes/classify_grasps.cpp)
 add_executable(detect_grasps src/nodes/detect_grasps.cpp)
 add_executable(detect_grasps_file src/nodes/detect_grasps_file.cpp)
 add_executable(gpd_classification src/caffe/gpd_classification.cpp)
@@ -140,6 +143,9 @@ add_executable(test_cnn src/tests/test_cnn.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(caffe_classifier ${Caffe_LIBRARIES})
+target_link_libraries(classification_node caffe_classifier cloud_camera hand_search handle_search learning plot 
+  ${PCL_LIBRARIES})
+target_link_libraries(classify_grasps classification_node ${catkin_LIBRARIES})
 target_link_libraries(cloud_camera ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(detect_grasps_file grasp_detection_node ${PCL_LIBRARIES})
 target_link_libraries(detect_grasps grasp_detection_node ${PCL_LIBRARIES})

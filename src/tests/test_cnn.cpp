@@ -22,8 +22,8 @@ int main(int argc, char** argv)
   std::string cloud_file_name, svm_file_name, root_dir, model_file, trained_file, label_file;
   std::vector<double> workspace, camera_pose;
   double min_score_diff, min_handle_length;
-  int num_samples, num_threads, min_inliers, plot, antipodal_mode;
-  bool forces_PSD, uses_NARF, plot_normals, save_hypotheses, reuse_inliers;
+  int num_samples, num_threads, min_inliers, plot;
+  bool forces_PSD, uses_NARF, plot_normals, save_hypotheses, reuse_inliers, predict_antipodal;
   node.getParam("cloud_file_name", cloud_file_name);
   node.getParam("svm_file_name", svm_file_name);
   node.getParam("workspace", workspace);
@@ -33,10 +33,9 @@ int main(int argc, char** argv)
   node.getParam("forces_PSD", forces_PSD);
   node.getParam("plotting", plot);
   node.getParam("uses_NARF", uses_NARF);
-  node.param("antipodal_mode", antipodal_mode, 0);
   node.param("plot_normals", plot_normals, false);
   node.param("save_hypotheses", save_hypotheses, false);
-  node.param("model_file", model_file, std::string("/home/baxter/data/grasp_images/"));
+  node.param("model_file", model_file, std::string(""));
   node.param("trained_file", trained_file, std::string(""));
   node.param("label_file", label_file, std::string(""));
   node.param("images_directory", root_dir, std::string(""));
@@ -112,7 +111,6 @@ int main(int argc, char** argv)
   params.nn_radius_taubin_ = 0.01;
   params.nn_radius_hands_ = 0.1;
   params.num_threads_ = num_threads;
-  params.antipodal_mode_ = antipodal_mode;
   params.num_orientations_ = 8;
   HandSearch hand_search(params);
   std::vector<GraspHypothesis> hands = hand_search.generateHypotheses(cloud_cam, 1, forces_PSD, plot_normals);

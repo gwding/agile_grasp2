@@ -1,0 +1,18 @@
+# A service call for ...
+
+# The request send to the service
+
+# list of grasps
+agile_grasp2/GraspMsg[] grasps
+
+# list of densities
+std_msgs/Float32[] densities
+
+
+
+---
+
+
+# The response returned by the service
+
+std_msgs/Float32[] scores # list of scores for each grasp

@@ -78,7 +78,7 @@ public:
   }
 
   std::vector<cv::Mat> createGraspImages(const std::vector<GraspHypothesis>& hands_list,
-    const Eigen::Matrix3Xd& cam_pos, bool is_plotting = false);
+    const Eigen::Matrix3Xd& cam_pos, bool is_plotting = false, bool is_storing = false);
 
 	/**
 	 * \brief Store a given list of grasp hypotheses as grasp images.
@@ -90,11 +90,14 @@ public:
   std::vector<cv::Mat> storeGraspImages(const std::vector<GraspHypothesis>& hands_list, const Eigen::Matrix3Xd& cam_pos,
     const std::string& root_dir, bool is_plotting = false);
 
+  cv::Mat createGraspImage(const Eigen::Matrix3Xd& points, const Eigen::Matrix3Xd& normals,
+    const agile_grasp2::GraspMsg& grasp, int idx = -1, bool is_plotting = false);
+
 
 private:
-  
+
   /**
-   * \brief Learning instance representing a grasp hypothesis. 
+   * \brief Learning instance representing a grasp hypothesis.
   */
   struct Instance
   {
@@ -104,7 +107,7 @@ private:
     Eigen::Vector3d source_to_center; ///< the vector from the center of the grasp to the camera position
     bool label; ///< the label of the instance (true: antipodal, false: not antipodal)
   };
-  
+
   /**
    * \brief Comparator for 2D vectors.
   */
@@ -129,16 +132,18 @@ private:
 			return false;
 		}
 	};
-  
+
   /**
    * \brief Create a learning instance from a grasp hypothesis.
    * \param h the grasp hypothesis from which the learning instance is created
    * \param cam_pos the camera poses
    * \param cam the index of the camera which produced the points in the grasp hypothesis
-   * \return the created learning instance 
+   * \return the created learning instance
   */
-  Instance createInstance(const GraspHypothesis& h, 
-    const Eigen::Matrix3Xd& cam_pos, int cam = -1);
+  Instance createInstance(const GraspHypothesis& h, const Eigen::Matrix3Xd& cam_pos, int cam = -1);
+
+  Instance createInstanceFromPointsNormals(const Eigen::Matrix3Xd& points, const Eigen::Matrix3Xd& normals,
+    const agile_grasp2::GraspMsg& grasp);
 
   /**
    * \brief Create a learning instance from a handle's centered grasp hypothesis.
@@ -161,7 +166,7 @@ private:
 	 * @param ins the learning instance to be converted
    * \return the created image
 	 */
-	cv::Mat convertToImageRGB(const Instance& ins);
+	cv::Mat convertToImageRGB(const Instance& ins, bool aligns = true, bool plots = false);
   
   /**
    * \brief Round a vector's elements down to the closest, smaller integers.

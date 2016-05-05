@@ -53,8 +53,8 @@ void FingerHand::evaluateFingers(const Eigen::Matrix3Xd& points, double bite, in
   {
     for (int i = 0; i < m; i++)
     {
-      // int num_in_gap = (cropped_points.array() > finger_spacing_(i)
-      // && cropped_points.array() < finger_spacing_(i) + finger_width_).count();
+//      int num_in_gap = (cropped_points.row(0).array() > finger_spacing_(i)
+//                        && cropped_points.row(0).array() < finger_spacing_(i) + finger_width_).count();
       int num_in_gap = 0;
       for (int j = 0; j < cropped_indices.size(); j++)
       {
@@ -62,17 +62,11 @@ void FingerHand::evaluateFingers(const Eigen::Matrix3Xd& points, double bite, in
           num_in_gap++;
       }
 
+//      std::cout << "num_in_gap: " << num_in_gap << std::endl;
+
       if (num_in_gap == 0)
       {
-        int sum;
-
-        if (i <= m / 2)
-          sum = (cropped_points.row(0).array() > finger_spacing_(i) + finger_width_).count();
-        else
-          sum = (cropped_points.row(0).array() < finger_spacing_(i)).count();
-
-        if (sum > 0)
-          fingers_(i) = true;
+        fingers_(i) = true;
       }
     }
   }
@@ -82,8 +76,6 @@ void FingerHand::evaluateFingers(const Eigen::Matrix3Xd& points, double bite, in
     {
       if (i == idx || i == m/2 + idx)
       {
-        // int num_in_gap = (cropped_points.array() > finger_spacing_(i)
-        // && cropped_points.array() < finger_spacing_(i) + finger_width_).count();
         int num_in_gap = 0;
         for (int j = 0; j < cropped_indices.size(); j++)
         {
@@ -93,15 +85,7 @@ void FingerHand::evaluateFingers(const Eigen::Matrix3Xd& points, double bite, in
 
         if (num_in_gap == 0)
         {
-          int sum;
-
-          if (i <= m / 2)
-            sum = (cropped_points.row(0).array() > finger_spacing_(i) + finger_width_).count();
-          else
-            sum = (cropped_points.row(0).array() < finger_spacing_(i)).count();
-
-          if (sum > 0)
-            fingers_(i) = true;
+          fingers_(i) = true;
         }
       }
     }

@@ -1,7 +1,8 @@
 #include <agile_grasp2/plot.h>
 
 
-void Plot::plotFingers(const std::vector<GraspHypothesis>& hand_list, const PointCloudRGBA::Ptr& cloud, std::string str)
+void Plot::plotFingers(const std::vector<GraspHypothesis>& hand_list, const PointCloudRGBA::Ptr& cloud,
+  std::string str, double outer_diameter)
 {
   const int WIDTH = pcl::visualization::PCL_VISUALIZER_LINE_WIDTH;
 
@@ -19,7 +20,8 @@ void Plot::plotFingers(const std::vector<GraspHypothesis>& hand_list, const Poin
     //~ pcl::PointXYZRGBA pc;
     pcl::PointXYZ pc;
     pc.getVector3fMap() = hand_list[i].getGraspBottom().cast<float>();
-    double width = hand_list[i].getGraspWidth();    
+//    double width = hand_list[i].getGraspWidth();
+    double width = outer_diameter;
     double hw = 0.5 * width;
     double step = hw / 30.0;
     Eigen::Vector3d left_bottom = hand_list[i].getGraspBottom() + hw * hand_list[i].getBinormal();
@@ -261,7 +263,8 @@ void Plot::plotHandsHelper(const PointCloudNormal::Ptr& hands_cloud,
 	const PointCloudNormal::Ptr& antipodal_hands_cloud, const PointCloudRGBA::Ptr& cloud,
 	std::string str, bool use_grasp_bottom)
 {
-	std::cout << "Drawing " << hands_cloud->size() << " grasps\n";
+	std::cout << "Drawing " << hands_cloud->size() << " grasps of which " << antipodal_hands_cloud->size()
+			<< " are antipodal grasps.\n";
 
 	std::string title = "Hands: " + str;
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = createViewer(title);
@@ -304,7 +307,7 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> Plot::createViewer(std::str
   viewer->setPosition(0, 0);
   viewer->setSize(640, 480);
   viewer->setBackgroundColor(1.0, 1.0, 1.0);
-  // viewer->addCoordinateSystem(1.0, "", 0);
+  // viewer->addCoordinateSystem(0.5, 0);
   return viewer;
 }
 

@@ -59,7 +59,8 @@ class Plot
 {
 	public:
 
-    void plotFingers(const std::vector<GraspHypothesis>& hand_list, const PointCloudRGBA::Ptr& cloud, std::string str);
+    void plotFingers(const std::vector<GraspHypothesis>& hand_list, const PointCloudRGBA::Ptr& cloud, std::string str,
+      double outer_diameter = 0.09);
 		
 		/**
 		 * \brief Plot a set of grasp hypotheses.

@@ -1,25 +1,31 @@
 <launch>
 	<node name="detect_grasps" pkg="agile_grasp2" type="detect_grasps" output="screen">
     <!-- Input Point Cloud -->
-    <param name="cloud_type" value="2" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
+    <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
     <param name="use_service" value="false" />
     <param name="cloud_topic" value="/cloud_sized_base" />        
-    <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
     <param name="save_hypotheses" value="false" />
+    <param name="filter_half_grasps" value="false"/>
+    <param name="voxelize" value="true"/>
       
     <!-- Hand Search -->
+<!--
     <rosparam param="workspace"> [0.57, 0.87, -0.2, 0.15, -0.25, 1] </rosparam>
+-->
+    <rosparam param="workspace"> [-10, 10, -10, 10, -10, 10] </rosparam>
     <rosparam param="camera_pose"> [0, 0.445417,  0.895323,  0.215, 
                                     1, 0,         0,        -0.015, 
                                     0, 0.895323, -0.445417,  0.23, 
                                     0, 0,         0,         1] </rosparam>
-    <param name="num_samples" value="16000" />
+    <param name="voxelize" value="false" />
+    <param name="num_samples" value="20000" />
     <param name="num_threads" value="4" />    
     <param name="nn_radius_taubin" value="0.01" />
     <param name="nn_radius_hands" value="0.1" />
     <param name="num_orientations" value="8" />
-    <param name="antipodal_method" value="0" /> <!-- 0: predict antipodal graps, 1/2: calculate antipodal grasps -->
+    <param name="predict_antipodal" value="true" />
     <param name="normal_estimation_method" value="1" /> <!-- 0: quadrics, 1: pcl::NormalEstimationOMP -->
     
     <!-- Hand Geometry -->
@@ -34,10 +40,10 @@
     <param name="model_file" value="$(find agile_grasp2)/caffe/test_1batch2.prototxt" />
     <param name="trained_file" value="$(find agile_grasp2)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
-    <param name="min_score_diff" value="300" />
+    <param name="min_score_diff" value="0" />
     
     <!-- Grasp Selection -->
-    <param name="num_selected" value="100" />
+    <param name="num_selected" value="500" />
     <param name="gripper_width_range" value="[0.03, 0.08]" />
 	</node>
 </launch>

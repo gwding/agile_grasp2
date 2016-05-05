@@ -23,11 +23,13 @@ net = caffe.Net('../caffe/test_1batch2.prototxt', '../caffe/bottles_boxes_cans_5
 net.forward()
 
 rootdir = sys.argv[2]
+testFilename = sys.argv[3]
+
 predictionList = []
 predictionProbsList = []
 
 # Classify the images specified in rootdir/test.txt
-with open(rootdir + 'test.txt', "r") as fh:
+with open(rootdir + testFilename, "r") as fh:
 	lines = fh.readlines()
 	for line in lines:
 		filename = line[:-1]
@@ -43,9 +45,10 @@ with open(rootdir + 'test.txt', "r") as fh:
 		predictionProbsList.append(predictionProbs)
 
 # Write the prediction scores to a file
-with open(rootdir + 'predictionList.txt', "w") as fh:
+predictionFilename = rootdir + 'predictionList_' + testFilename
+with open(predictionFilename, "w") as fh:
 	for predictionProbs in predictionProbsList:
 		#~ fh.write(str(predictionProbs) + '\n')
 		fh.write(str(predictionProbs[0]) + ', ' + str(predictionProbs[1]) + '\n')
     
-print "Wrote:", rootdir + 'predictionList.txt'
+print "Wrote:", predictionFilename

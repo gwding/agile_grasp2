@@ -43,6 +43,7 @@
 #include <sensor_msgs/PointCloud2.h>
 
 // PCL
+#include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
@@ -102,6 +103,9 @@ private:
 
   bool graspsCallback(agile_grasp2::FindGrasps::Request& req, agile_grasp2::FindGrasps::Response& resp);
 
+  std::vector<GraspHypothesis> pruneGraspsOnHandParameters(const std::vector<GraspHypothesis>& hands, float min_x,
+    float max_x, float min_y, float max_y, float min_z);
+
   /**
    * \brief Callback function for the ROS topic that contains the input point cloud.
    * \param msg the incoming ROS message
@@ -139,6 +143,9 @@ private:
   HandleSearch handle_search_;
 
   /** Parameters from launch file */
+  bool filter_half_grasps_;
+  bool voxelize_;
+  int antipodal_mode_;
   bool save_hypotheses_;
   bool only_plot_output_;
   int plot_mode_;
@@ -150,6 +157,12 @@ private:
   double min_score_diff_;
   int num_selected_;
   double min_aperture_, max_aperture_;
+  double outer_diameter_;
+
+  /** constants for antipodal mode */
+  static const int NONE = 0; ///< no prediction/calculation of antipodal grasps, uses grasp hypotheses
+  static const int PREDICTION = 1; ///< predicts antipodal grasps
+  static const int GEOMETRIC = 2; ///< calculates antipodal grasps
 
   /** constants for plotting */
   static const int NO_PLOTTING = 0; ///< nothing is plotted

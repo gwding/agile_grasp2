@@ -61,12 +61,12 @@ public:
 
   Classifier(const string& model_file, const string& trained_file, const string& label_file);
 
-  std::vector<Prediction> Classify(const cv::Mat& img);
+  std::vector<Prediction> Classify(const cv::Mat& img, bool use_softmax = false);
 
 
 private:
 
-  std::vector<float> Predict(const cv::Mat& img);
+  std::vector<float> Predict(const cv::Mat& img, bool use_softmax = false);
 
   void WrapInputLayer(std::vector<cv::Mat>* input_channels);
 

@@ -345,14 +345,14 @@ void Quadric::print()
 	std::cout << "sample: " << sample_.transpose() << std::endl;
 	std::cout << "parameters: " << parameters_.transpose() << std::endl;
 	std::cout << "normals_ratio: " << normals_ratio_ << std::endl;
-	std::cout << "normals_axis: " << curvature_axis_.transpose() << std::endl;
-	std::cout << "normals_average: " << normal_.transpose() << std::endl;
+	std::cout << "curvature_axis: " << curvature_axis_.transpose() << std::endl;
+	std::cout << "normal: " << normal_.transpose() << std::endl;
 	std::cout << "binormal: " << binormal_.transpose() << std::endl;
 }
 
 void Quadric::findAverageNormalAxis(const Eigen::MatrixXd &normals)
 {
-  // calculate curvature axis
+  // 1. Calculate curvature axis.
 	Eigen::Matrix3d M = normals * normals.transpose();
 	Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(M);
 	Eigen::Vector3d eigen_values = eigen_solver.eigenvalues().real();
@@ -364,17 +364,17 @@ void Quadric::findAverageNormalAxis(const Eigen::MatrixXd &normals)
 	eigen_values.minCoeff(&min_index);
 	curvature_axis_ = eigen_vectors.col(min_index);
 
-	// calculate surface normal
+	// 2. Calculate surface normal.
 	int max_index;
 	(normals.transpose() * normals).array().pow(6).colwise().sum().maxCoeff(&max_index);
 	Eigen::Vector3d normpartial = (Eigen::MatrixXd::Identity(3, 3)
     - curvature_axis_ * curvature_axis_.transpose()) * normals.col(max_index);
 	normal_ = normpartial / normpartial.norm();
 
-	// create binormal
+	// 3. Create binormal.
 	binormal_ = curvature_axis_.cross(normal_);
 
-	// require normal and binormal to be oriented towards source
+	// 4. Require normal and binormal to be oriented towards source.
 	Eigen::Vector3d source_to_sample = sample_ - cam_origins_.col(majority_cam_source_);
 	if (normal_.dot(source_to_sample) > 0) // normal points away from source
 		normal_ *= -1.0;

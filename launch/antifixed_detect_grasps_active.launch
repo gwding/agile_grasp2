@@ -1,22 +1,23 @@
 <launch>
-	<node name="detect_grasps" pkg="agile_grasp2" type="detect_grasps" output="screen">
+	<node name="detect_grasps_active" pkg="agile_grasp2" type="detect_grasps" output="screen">
     <!-- Input Point Cloud -->
-    <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
+    <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp/CloudSized, 3: agile_grasp/CloudIndexed -->
     <param name="use_service" value="false" />
-    <param name="cloud_topic" value="/cloud_base" />
+    <param name="cloud_topic" value="/cloud_infinitam" />
         
     <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
     <param name="save_hypotheses" value="false" />
+    <param name="voxelize" value="false"/>
     <param name="filter_half_grasps" value="false"/>
     
     <!-- Hand Search -->
-    <rosparam param="workspace"> [0.52, 0.87, -0.28, 0.10, -0.26, 1] </rosparam>
+    <rosparam param="workspace"> [0.00, 1.00, -1.00, 1.00, -1.00, 1.00] </rosparam>
     <rosparam param="camera_pose"> [0, 0.445417,  0.895323,  0.215, 
                                     1, 0,         0,        -0.015, 
                                     0, 0.895323, -0.445417,  0.23, 
                                     0, 0,         0,         1] </rosparam>
-    <param name="num_samples" value="15000" />
+    <param name="num_samples" value="20000" />
     <param name="num_threads" value="4" />    
     <param name="nn_radius_taubin" value="0.01" />
     <param name="nn_radius_hands" value="0.1" />
@@ -36,10 +37,11 @@
     <param name="model_file" value="$(find agile_grasp2)/caffe/test_1batch2.prototxt" />
     <param name="trained_file" value="$(find agile_grasp2)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
-    <param name="min_score_diff" value="500" />
+    <param name="min_score_diff" value="650" /> <!-- March experiments 650 -->
+    <!-- <param name="min_score_diff" value="0" /> --> <!-- Comparison -->
     
     <!-- Grasp Selection -->
-    <param name="num_selected" value="100" />
+    <param name="num_selected" value="1000" />
     <param name="gripper_width_range" value="[0.03, 0.08]" />
 	</node>
 </launch>

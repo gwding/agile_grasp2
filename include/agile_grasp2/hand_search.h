@@ -76,7 +76,6 @@ class HandSearch
       double nn_radius_taubin_;
 
       /** grasp hypotheses generation */
-      int antipodal_mode_; ///< the antipodal calculation method (see constants at end of file)
       int normal_estimation_method_; ///< the normal estimation method (see constants at end of file)
       int num_threads_; ///< the number of CPU threads to be used for the hypothesis generation
       int num_samples_; ///< the number of samples drawn from the point cloud
@@ -97,10 +96,10 @@ class HandSearch
     HandSearch() : uses_determinstic_normal_estimation_(false), plots_camera_sources_(false), plots_local_axes_(false)
       { }
 
-    HandSearch(Parameters params) : finger_width_(params.finger_width_),
-      hand_outer_diameter_(params.hand_outer_diameter_), hand_depth_(params.hand_depth_),
-      hand_height_(params.hand_height_), init_bite_(params.init_bite_), num_threads_(params.num_threads_),
-      num_samples_(params.num_samples_), antipodal_method_(params.antipodal_mode_),
+    HandSearch(Parameters params) : cam_tf_left_(params.cam_tf_left_), cam_tf_right_(params.cam_tf_right_),
+      finger_width_(params.finger_width_), hand_outer_diameter_(params.hand_outer_diameter_),
+      hand_depth_(params.hand_depth_), hand_height_(params.hand_height_), init_bite_(params.init_bite_),
+      num_threads_(params.num_threads_), num_samples_(params.num_samples_),
       nn_radius_taubin_(params.nn_radius_taubin_), nn_radius_hands_(params.nn_radius_hands_),
       num_orientations_(params.num_orientations_), plots_samples_(false), plots_local_axes_(false),
       plots_camera_sources_(false), uses_determinstic_normal_estimation_(false) { }
@@ -126,15 +125,15 @@ class HandSearch
 
     void setParameters(const Parameters& params);
 
-    int getAntipodalMethod() const
+    void setCamTfLeft(const Eigen::Matrix4d& cam_tf_left)
     {
-      return antipodal_method_;
+      cam_tf_left_ = cam_tf_left;
     }
 
-    /** constants for antipodal calculation */
-    static const int NO_ANTIPODAL = 0; ///< do not check the antipodal conditions
-    static const int OLD_ANTIPODAL = 1; ///< antipodal condition from previous paper
-    static const int NEW_ANTIPODAL = 2; ///< antipodal condition from current paper
+    void setCamTfRight(const Eigen::Matrix4d& cam_tf_right)
+    {
+      cam_tf_right_ = cam_tf_right;
+    }
       
   
   private:

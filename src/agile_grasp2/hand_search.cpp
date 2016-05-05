@@ -19,7 +19,7 @@ std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& c
   double t0_normals = omp_get_wtime();
   if (cloud_cam.getNormals().cols() == 0)
   {
-    std::cout << "Estimating normals for all points ";
+    std::cout << "Estimating normals for all points";
     if (normal_estimation_method_ == NORMAL_ESTIMATION_QUADRICS)
     {
       std::cout << " using quadrics\n";
@@ -52,9 +52,11 @@ std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& c
 
   // 2. Fit quadrics.
   std::cout << "Fitting quadrics ...\n";
-  std::vector<Quadric> quadrics = fitQuadrics(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
-//  std::vector<Quadric> quadrics = calculateLocalFrames(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_,
-//    kdtree);
+  std::vector<Quadric> quadrics;
+  if (normal_estimation_method_ == NORMAL_ESTIMATION_QUADRICS)
+    quadrics = fitQuadrics(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
+  else if (normal_estimation_method_ == NORMAL_ESTIMATION_OMP)
+    quadrics = calculateLocalFrames(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
   if (plots_local_axes_)
     plot_.plotLocalAxes(quadrics, cloud_cam.getCloudOriginal());
 
@@ -82,8 +84,10 @@ void HandSearch::setParameters(const Parameters& params)
   nn_radius_hands_ = params.nn_radius_hands_;
   num_orientations_ = params.num_orientations_;
 
-  antipodal_method_ = params.antipodal_mode_;
   normal_estimation_method_ = params.normal_estimation_method_;
+
+  cam_tf_left_ = params.cam_tf_left_;
+  cam_tf_right_ = params.cam_tf_right_;
 }
 
 
@@ -102,6 +106,7 @@ void HandSearch::calculateNormalsOMP(const CloudCamera& cloud_cam)
   pcl::NormalEstimationOMP<pcl::PointXYZRGBA, pcl::Normal> estimator(num_threads_);
   pcl::PointCloud<pcl::Normal>::Ptr cloud_normals_omp(new pcl::PointCloud<pcl::Normal>);
   pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree_ptr(new pcl::search::KdTree<pcl::PointXYZRGBA>);
+  estimator.setViewPoint(0,0,0);
   estimator.setInputCloud(cloud_cam.getCloudProcessed());
   estimator.setSearchMethod(tree_ptr);
   estimator.setRadiusSearch(0.01);
@@ -153,7 +158,11 @@ std::vector<Quadric> HandSearch::fitQuadrics(const CloudCamera& cloud_cam, const
   for (int i = 0; i < quadric_list.size(); i++)
   {
     if (quadric_list[i])
+    {
       quadrics.push_back(*quadric_list[i]);
+//      quadric_list[i]->print(); // debugging
+//      std::cout << "\n";
+    }
     delete quadric_list[i];
   }
   quadric_list.clear();
@@ -225,6 +234,7 @@ std::vector<Quadric> HandSearch::calculateLocalFrames(const CloudCamera& cloud_c
       Quadric* quadric = new Quadric(T_cams, sample.getVector3fMap().cast<double>(), majority_cam_source);
       quadric->findAverageNormalAxis(nn_normals);
       quadric_list[i] = quadric;
+//      quadric_list[i]->print();
     }
   }
 
@@ -269,7 +279,6 @@ std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_
 #endif
   for (std::size_t i = 0; i < quadric_list.size(); i++)
   {
-    // std::cout << i << "\n";
     pcl::PointXYZRGBA sample;
     sample.x = quadric_list[i].getSample()(0);
     sample.y = quadric_list[i].getSample()(1);
@@ -319,7 +328,7 @@ std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& p
 
   // local quadric frame
   Eigen::Matrix3d frame;
-  frame << quadric.getNormal(), quadric.getCurvatureAxis().cross(quadric.getNormal()), quadric.getCurvatureAxis();
+  frame << quadric.getNormal(), quadric.getBinormal(), quadric.getCurvatureAxis();
 
   // transform points into quadric frame and crop them based on <hand_height>
   Eigen::Matrix3Xd points_frame = frame.transpose() * points;
