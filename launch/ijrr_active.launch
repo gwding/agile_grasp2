@@ -10,7 +10,7 @@
     <param name="only_plot_output" value="false" />
         
     <!-- Hand Search -->
-    <rosparam param="workspace"> [0.52, 0.89, -0.34, 0.05, -0.27, 1] </rosparam>
+    <rosparam param="workspace"> [0.52, 0.92, -0.34, 0.05, -0.27, 1] </rosparam>
     <rosparam param="camera_pose"> [] </rosparam>
     <param name="num_samples" value="10000" />
     <param name="num_threads" value="4" />    

@@ -320,8 +320,8 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
   if (!only_plot_output_ && plot_mode_ == PCL)
   {
 //    plotter.plotHands(hands, antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
-//    plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
-    plotter.plotHands(antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
+//    plotter.plotHands(antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
+    plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
   }
 
 
