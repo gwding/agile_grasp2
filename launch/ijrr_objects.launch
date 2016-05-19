@@ -6,7 +6,7 @@
     <param name="cloud_topic" value="/cloud_cluster" />        
     
     <!-- Plotting -->
-    <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
             
     <!-- Hand Search -->    
@@ -35,7 +35,7 @@
     <param name="model_file" value="$(find agile_grasp2)/caffe/test_1batch2.prototxt" />
     <param name="trained_file" value="$(find agile_grasp2)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
-    <param name="min_score_diff" value="500" /> <!-- March Experiments -->
+    <param name="min_score_diff" value="800" /> <!-- March Experiments -->
     
     <!-- Grasp Selection -->
     <param name="num_selected" value="100" />    
