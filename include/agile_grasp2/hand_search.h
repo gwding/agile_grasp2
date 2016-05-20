@@ -120,7 +120,7 @@ class HandSearch
       num_samples_(num_samples), plots_samples_(false), plots_local_axes_(false), 
       uses_determinstic_normal_estimation_(false), nn_radius_taubin_(0.03), nn_radius_hands_(0.08) { }
     
-    std::vector<GraspHypothesis> generateHypotheses(const CloudCamera& cloud_cam, int antipodal_mode,
+    std::vector<GraspHypothesis> generateHypotheses(const CloudCamera& cloud_cam, int antipodal_mode, bool use_samples,
       bool forces_PSD = false, bool plots_normals = false, bool plots_samples = false);
 
     void setParameters(const Parameters& params);
@@ -146,8 +146,14 @@ class HandSearch
     std::vector<Quadric> calculateLocalFrames(const CloudCamera& cloud_cam, const std::vector<int>& indices,
       double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree);
 
+    std::vector<Quadric> calculateLocalFrames(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
+      double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree);
+
     std::vector<Quadric> fitQuadrics(const CloudCamera& cloud_cam, const std::vector<int>& indices, double radius,
       const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree, bool calculates_normals = false, bool forces_PSD = false);
+
+    std::vector<Quadric> fitQuadrics(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples, double radius,
+          const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree, bool calculates_normals = false, bool forces_PSD = false);
 
     std::vector<GraspHypothesis> evaluateHands(const CloudCamera& cloud_cam, const std::vector<Quadric>& quadric_list,
       double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree);

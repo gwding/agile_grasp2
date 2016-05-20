@@ -210,3 +210,14 @@ PointCloudRGB::Ptr CloudCamera::loadPointCloudFromFile(const std::string& filena
   }
   return cloud;
 }
+
+
+void CloudCamera::setSamples(const agile_grasp2::SamplesMsg& msg)
+{
+  samples_.resize(3, msg.samples.size());
+
+  for (int i = 0; i < samples_.cols(); i++)
+  {
+    samples_.col(i) << msg.samples[i].x, msg.samples[i].y, msg.samples[i].z;
+  }
+}

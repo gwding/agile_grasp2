@@ -90,6 +90,8 @@ class Plot
 		 * \param cloud the point cloud to be plotted
 		*/
 		void plotSamples(const std::vector<int>& index_list, const PointCloudRGBA::Ptr& cloud);
+
+		void plotSamples(const Eigen::Matrix3Xd& samples, const PointCloudRGBA::Ptr& cloud);
     
     void plotSamples(const PointCloudRGBA::Ptr& samples_cloud, const PointCloudRGBA::Ptr& cloud);
     

@@ -4,11 +4,11 @@
     <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp/CloudSized, 3: agile_grasp/CloudIndexed -->
     <param name="use_service" value="false" />
     <param name="cloud_topic" value="/cloud_base" /> 
-    <param name="samples_topic" value="/samples" />        
+    <param name="samples_topic" value="/object_recognition_caffe/grasp_samples" />        
     
     <!-- Plotting -->
-    <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
-    <param name="only_plot_output" value="true" />
+    <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="only_plot_output" value="false" />
             
     <!-- Hand Search -->    
     <rosparam param="workspace"> [0.5, 0.92, -0.4, 0.2, -0.27, 1] </rosparam>

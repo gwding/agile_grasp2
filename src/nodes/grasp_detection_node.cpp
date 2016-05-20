@@ -23,7 +23,8 @@ const int GraspDetectionNode::INDICES = 2; ///< service uses all points which ar
 
 
 GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false), has_normals_(false),
-  cloud_(new PointCloudRGBA), cloud_normals_(new PointCloudNormal), voxel_size_(0.003), size_left_cloud_(0)
+  cloud_(new PointCloudRGBA), cloud_normals_(new PointCloudNormal), voxel_size_(0.003), size_left_cloud_(0),
+  has_samples_(true), use_incoming_samples_(false)
 {
   indices_.resize(0);
 
@@ -49,7 +50,11 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
     
     // subscribe to input samples ROS topic
     if (!samples_topic.empty())
+    {
       samples_sub_ = node.subscribe(samples_topic, 1, &GraspDetectionNode::samples_callback, this);
+      has_samples_ = false;
+      use_incoming_samples_ = true;
+    }
 
     bool use_service;
     node.param("use_service", use_service, false);
@@ -142,7 +147,7 @@ void GraspDetectionNode::run()
 
   while (ros::ok())
   {
-    if (has_cloud_)
+    if (has_cloud_ && ((use_incoming_samples_ && has_samples_) || !use_incoming_samples_))
     {
       // detect grasps in point cloud
       std::vector<GraspHypothesis> grasps = detectGraspPosesInTopic();
@@ -154,6 +159,7 @@ void GraspDetectionNode::run()
 
       // reset the system
       has_cloud_ = false;
+      has_samples_ = false;
       ROS_INFO("Waiting for point cloud to arrive ...");
     }
 
@@ -217,6 +223,10 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
   {
     plotter.plotSamples(indices_, cloud_cam.getCloudOriginal());
   }
+  else if (!only_plot_output_ && plot_mode_ == PCL && use_incoming_samples_)
+  {
+    plotter.plotSamples(cloud_cam.getSamples(), cloud_cam.getCloudOriginal());
+  }
 
   // camera poses for 2-camera Baxter setup
   Eigen::Matrix4d cam_tf_left, cam_tf_right; // camera poses
@@ -252,7 +262,7 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
 
 
   // 1. Generate grasp hypotheses.
-  std::vector<GraspHypothesis> hands = hand_search_.generateHypotheses(cloud_cam, 0);
+  std::vector<GraspHypothesis> hands = hand_search_.generateHypotheses(cloud_cam, 0, use_incoming_samples_);
   ROS_INFO_STREAM("# grasp hypotheses: " << hands.size());
   if (!only_plot_output_ && plot_mode_ == PCL)
   {
@@ -406,7 +416,12 @@ void GraspDetectionNode::preprocessPointCloud(const std::vector<double>& workspa
     }
 
     // 3. Subsampling
-    if (num_samples > cloud_cam.getCloudProcessed()->size())
+    if (use_incoming_samples_)
+    {
+      cloud_cam.setSamples(samples_msg_);
+      std::cout << "Using " << samples_msg_.samples.size() << " from external source.\n";
+    }
+    else if (num_samples > cloud_cam.getCloudProcessed()->size())
     {
       std::vector<int> indices_all(cloud_cam.getCloudProcessed()->size());
       for (int i=0; i < cloud_cam.getCloudProcessed()->size(); i++)
@@ -571,14 +586,19 @@ void GraspDetectionNode::cloud_indexed_callback(const agile_grasp2::CloudIndexed
     for (int i=0; i < indices_.size(); i++)
       indices_[i] = msg.indices[i].data;
     has_cloud_ = true;
-    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points and " << indices_.size() << " indices\n");
+    ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points and " << indices_.size() << " indices");
   }
 }
 
 
 void GraspDetectionNode::samples_callback(const agile_grasp2::SamplesMsg& msg)
 {
-  
+  if (!has_samples_)
+  {
+    samples_msg_ = msg;
+    has_samples_ = true;
+    ROS_INFO_STREAM("Received grasp samples message with " << msg.samples.size() << " samples");
+  }
 }
 
 

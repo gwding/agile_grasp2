@@ -134,12 +134,14 @@ private:
   PointCloudRGBA::Ptr cloud_;
   PointCloudNormal::Ptr cloud_normals_;
   int size_left_cloud_;
-  bool has_cloud_, has_normals_;
+  bool has_cloud_, has_normals_, has_samples_;
+  bool use_incoming_samples_;
   ros::Subscriber cloud_sub_;
   ros::Subscriber samples_sub_;
   ros::Publisher grasps_pub_;
   ros::ServiceServer grasps_service_;
   std::vector<int> indices_;
+  agile_grasp2::SamplesMsg samples_msg_;
 
   Classifier* classifier_;
   Learning* learning_;

@@ -47,6 +47,8 @@
 
 #include <ros/ros.h>
 
+#include <agile_grasp2/SamplesMsg.h>
+
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGB;
 typedef pcl::PointCloud<pcl::PointNormal> PointCloudNormal;
@@ -119,10 +121,18 @@ public:
     return normals_;
   }
 
+  const Eigen::Matrix3Xd& getSamples() const
+  {
+    return samples_;
+  }
+
   void setSampleIndices(const std::vector<int>& sampleIndices)
   {
     sample_indices_ = sampleIndices;
   }
+
+  void setSamples(const agile_grasp2::SamplesMsg& msg);
+
 
 private:
 
