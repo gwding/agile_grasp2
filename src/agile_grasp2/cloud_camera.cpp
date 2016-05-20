@@ -5,6 +5,7 @@ CloudCamera::CloudCamera(const PointCloudNormal::Ptr& cloud, int size_left_cloud
   : cloud_processed_(new PointCloudRGB), cloud_original_(new PointCloudRGB)
 {
   sample_indices_.resize(0);
+  samples_.resize(3,0);
 
   pcl::copyPointCloud(*cloud, *cloud_original_);
   *cloud_processed_ = *cloud_original_;

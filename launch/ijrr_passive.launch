@@ -3,7 +3,8 @@
     <!-- Input Point Cloud -->
     <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp/CloudSized, 3: agile_grasp/CloudIndexed -->
     <param name="use_service" value="false" />
-    <param name="cloud_topic" value="/cloud_base" />        
+    <param name="cloud_topic" value="/cloud_base" /> 
+    <param name="samples_topic" value="/samples" />        
     
     <!-- Plotting -->
     <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->

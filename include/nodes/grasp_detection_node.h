@@ -60,6 +60,7 @@
 #include <agile_grasp2/CloudSized.h>
 #include <agile_grasp2/GraspMsg.h>
 #include <agile_grasp2/GraspListMsg.h>
+#include <agile_grasp2/SamplesMsg.h>
 
 // custom services
 #include <agile_grasp2/FindGrasps.h>
@@ -123,6 +124,8 @@ private:
    * \param msg the incoming ROS message (of type agile_grasp2/CloudSized)
   */
   void cloud_indexed_callback(const agile_grasp2::CloudIndexed& msg);
+  
+  void samples_callback(const agile_grasp2::SamplesMsg& msg);
 
   agile_grasp2::GraspListMsg createGraspListMsg(const std::vector<Handle>& handles);
 
@@ -133,6 +136,7 @@ private:
   int size_left_cloud_;
   bool has_cloud_, has_normals_;
   ros::Subscriber cloud_sub_;
+  ros::Subscriber samples_sub_;
   ros::Publisher grasps_pub_;
   ros::ServiceServer grasps_service_;
   std::vector<int> indices_;
@@ -160,25 +164,25 @@ private:
   double outer_diameter_;
 
   /** constants for antipodal mode */
-  static const int NONE = 0; ///< no prediction/calculation of antipodal grasps, uses grasp hypotheses
-  static const int PREDICTION = 1; ///< predicts antipodal grasps
-  static const int GEOMETRIC = 2; ///< calculates antipodal grasps
+  static const int NONE; ///< no prediction/calculation of antipodal grasps, uses grasp hypotheses
+  static const int PREDICTION; ///< predicts antipodal grasps
+  static const int GEOMETRIC; ///< calculates antipodal grasps
 
   /** constants for plotting */
-  static const int NO_PLOTTING = 0; ///< nothing is plotted
-  static const int PCL = 1; ///< everything is plotted in pcl-visualizer
-  static const int RVIZ = 2; ///< everything is plotted in rviz
+  static const int NO_PLOTTING; ///< nothing is plotted
+  static const int PCL; ///< everything is plotted in pcl-visualizer
+  static const int RVIZ; ///< everything is plotted in rviz
 
   /** constants for input point cloud types */
-  static const int PCD_FILE = 0; ///< *.pcd file
-  static const int POINT_CLOUD_2 = 1; ///< sensor_msgs/PointCloud2
-  static const int CLOUD_SIZED = 2; ///< agile_grasp2/CloudSized
-  static const int CLOUD_INDEXED = 3; ///< agile_grasp2/CloudIndexed
+  static const int PCD_FILE; ///< *.pcd file
+  static const int POINT_CLOUD_2; ///< sensor_msgs/PointCloud2
+  static const int CLOUD_SIZED; ///< agile_grasp2/CloudSized
+  static const int CLOUD_INDEXED; ///< agile_grasp2/CloudIndexed
 
   /** constants for ROS service */
-  static const int ALL_POINTS = 0; ///< service uses all points in the cloud
-  static const int RADIUS = 1; ///< service uses all points within a radius given in the request
-  static const int INDICES = 2; ///< service uses all points which are contained in an index list given in the request
+  static const int ALL_POINTS; ///< service uses all points in the cloud
+  static const int RADIUS; ///< service uses all points within a radius given in the request
+  static const int INDICES; ///< service uses all points which are contained in an index list given in the request
 };
 
 #endif /* GRASP_DETECTION_NODE_H_ */

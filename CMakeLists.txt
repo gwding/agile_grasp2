@@ -61,7 +61,7 @@ add_service_files(FILES FindGrasps.srv Classify.srv)
 
 ## Generate messages in the 'msg' folder
 add_message_files(FILES CloudIndexed.msg CloudSized.msg DensityGraspMsg.msg DensityGraspListMsg.msg GraspMsg.msg 
-  GraspListMsg.msg)
+  GraspListMsg.msg SamplesMsg.msg)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(DEPENDENCIES geometry_msgs sensor_msgs std_msgs)

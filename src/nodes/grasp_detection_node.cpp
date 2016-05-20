@@ -1,5 +1,26 @@
 #include <nodes/grasp_detection_node.h>
 
+/** constants for antipodal mode */
+const int GraspDetectionNode::NONE = 0; ///< no prediction/calculation of antipodal grasps, uses grasp hypotheses
+const int GraspDetectionNode::PREDICTION = 1; ///< predicts antipodal grasps
+const int GraspDetectionNode::GEOMETRIC = 2; ///< calculates antipodal grasps
+
+/** constants for plotting */
+const int GraspDetectionNode::NO_PLOTTING = 0; ///< nothing is plotted
+const int GraspDetectionNode::PCL = 1; ///< everything is plotted in pcl-visualizer
+const int GraspDetectionNode::RVIZ = 2; ///< everything is plotted in rviz
+
+/** constants for input point cloud types */
+const int GraspDetectionNode::PCD_FILE = 0; ///< *.pcd file
+const int GraspDetectionNode::POINT_CLOUD_2 = 1; ///< sensor_msgs/PointCloud2
+const int GraspDetectionNode::CLOUD_SIZED = 2; ///< agile_grasp2/CloudSized
+const int GraspDetectionNode::CLOUD_INDEXED = 3; ///< agile_grasp2/CloudIndexed
+
+/** constants for ROS service */
+const int GraspDetectionNode::ALL_POINTS = 0; ///< service uses all points in the cloud
+const int GraspDetectionNode::RADIUS = 1; ///< service uses all points within a radius given in the request
+const int GraspDetectionNode::INDICES = 2; ///< service uses all points which are contained in an index list given in the request
+
 
 GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false), has_normals_(false),
   cloud_(new PointCloudRGBA), cloud_normals_(new PointCloudNormal), voxel_size_(0.003), size_left_cloud_(0)
@@ -14,6 +35,9 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
   {
     std::string cloud_topic;
     node.param("cloud_topic", cloud_topic, std::string("/camera/depth_registered/points"));
+    
+    std::string samples_topic;
+    node.param("samples_topic", samples_topic, std::string(""));
 
     // subscribe to input point cloud ROS topic
     if (cloud_type == POINT_CLOUD_2)
@@ -22,6 +46,10 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
       cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_sized_callback, this);
     else if (cloud_type == CLOUD_INDEXED)
       cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_indexed_callback, this);
+    
+    // subscribe to input samples ROS topic
+    if (!samples_topic.empty())
+      samples_sub_ = node.subscribe(samples_topic, 1, &GraspDetectionNode::samples_callback, this);
 
     bool use_service;
     node.param("use_service", use_service, false);
@@ -545,6 +573,12 @@ void GraspDetectionNode::cloud_indexed_callback(const agile_grasp2::CloudIndexed
     has_cloud_ = true;
     ROS_INFO_STREAM("Received cloud with " << cloud_->size() << " points and " << indices_.size() << " indices\n");
   }
+}
+
+
+void GraspDetectionNode::samples_callback(const agile_grasp2::SamplesMsg& msg)
+{
+  
 }
 
 

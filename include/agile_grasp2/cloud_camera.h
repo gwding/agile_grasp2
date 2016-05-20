@@ -164,7 +164,8 @@ private:
   PointCloudRGB::Ptr cloud_original_; ///< the original point cloud
   Eigen::MatrixXi camera_source_; ///< binary matrix: (i,j) = 1 if point j is seen by camera i
   Eigen::Matrix3Xd normals_; ///< the surface normal for each point in the point cloud
-  std::vector<int> sample_indices_; ///< the indices into the point cloud used for the grasp hypothesis generation
+  std::vector<int> sample_indices_; ///< the indices into the point cloud used to sample grasp hypotheses
+  Eigen::Matrix3Xd samples_; ///< the samples used for finding grasp hypotheses
 };
 
 #endif /* CLOUD_CAMERA_H_ */
