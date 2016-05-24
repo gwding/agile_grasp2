@@ -6,9 +6,9 @@ std::vector<cv::Mat> Learning::createGraspImages(const std::vector<GraspHypothes
 {
   std::vector<cv::Mat> image_list(hands_list.size());
 
-//  #ifdef _OPENMP // parallelization using OpenMP
-//  #pragma omp parallel for num_threads(num_threads_)
-//  #endif
+  #ifdef _OPENMP // parallelization using OpenMP
+  #pragma omp parallel for num_threads(num_threads_)
+  #endif
   for (int i = 0; i < hands_list.size(); i++)
   {
     Instance ins = createInstance(hands_list[i], cam_pos);

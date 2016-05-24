@@ -148,7 +148,7 @@ void Plot::plotSamples(const PointCloudRGBA::Ptr& samples_cloud, const PointClou
 	// draw the samples
 	viewer->addPointCloud<pcl::PointXYZRGBA>(samples_cloud, "samples cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "samples cloud");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "samples cloud");
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 1.0, "samples cloud");
 
 	runViewer(viewer);
 }

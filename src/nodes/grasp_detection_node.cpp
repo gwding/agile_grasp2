@@ -223,7 +223,7 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
   {
     plotter.plotSamples(indices_, cloud_cam.getCloudOriginal());
   }
-  else if (!only_plot_output_ && plot_mode_ == PCL && use_incoming_samples_)
+  else if (use_incoming_samples_ && plot_mode_ == PCL && use_incoming_samples_)
   {
     plotter.plotSamples(cloud_cam.getSamples(), cloud_cam.getCloudOriginal());
   }
@@ -322,6 +322,7 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPoses(CloudCamera& c
     cams_mat.col(1) = cam_tf_right.block<3, 1>(0, 3);
   //  std::vector<cv::Mat> image_list = learn.storeGraspImages(hands, cams_mat, grasp_image_dir_, false);
     std::vector<cv::Mat> image_list = learning_->createGraspImages(hands_filtered, cams_mat, false, false);
+    std::cout << " done\n";
     for (int i = 0; i < image_list.size(); i++)
     {
       std::vector<Prediction> predictions = classifier_->Classify(image_list[i]);
@@ -418,8 +419,19 @@ void GraspDetectionNode::preprocessPointCloud(const std::vector<double>& workspa
     // 3. Subsampling
     if (use_incoming_samples_)
     {
-      cloud_cam.setSamples(samples_msg_);
-      std::cout << "Using " << samples_msg_.samples.size() << " from external source.\n";
+      // remove samples outside of the workspace
+      agile_grasp2::SamplesMsg filtered_samples_msg;
+      for (int i = 0; i < samples_msg_.samples.size(); ++i)
+      {
+        const geometry_msgs::Point& p = samples_msg_.samples[i];
+        if (p.x > ws(0) && p.x < ws(1) && p.y > ws(2) && p.y < ws(3) && p.z > ws(4) && p.z < ws(5))
+          filtered_samples_msg.samples.push_back(p);
+      }
+      std::cout << "Workspace filtering removed " << samples_msg_.samples.size() - filtered_samples_msg.samples.size()
+        << " samples.\n";
+
+      cloud_cam.subsampleSamples(filtered_samples_msg, num_samples);
+      std::cout << "Using " << filtered_samples_msg.samples.size() << " samples from external source.\n";
     }
     else if (num_samples > cloud_cam.getCloudProcessed()->size())
     {

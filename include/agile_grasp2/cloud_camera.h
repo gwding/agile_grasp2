@@ -94,6 +94,8 @@ public:
   */
   void subsampleUniformly(int num_samples);
 
+  void subsampleSamples(const agile_grasp2::SamplesMsg& msg, int num_samples);
+
   void writeNormalsToFile(const std::string& filename, const Eigen::Matrix3Xd& normals);
 
   const Eigen::MatrixXi& getCameraSource() const

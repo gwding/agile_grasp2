@@ -437,8 +437,8 @@ std::vector<Quadric> HandSearch::calculateLocalFrames(const CloudCamera& cloud_c
       sample.x = samples(0,i);
       sample.y = samples(1,i);
       sample.z = samples(2,i);
-      std::cout << "samples: " << samples.col(i).transpose() << std::endl;
-      std::cout << "sample: " << sample << std::endl;
+//      std::cout << "samples: " << samples.col(i).transpose() << std::endl;
+//      std::cout << "sample: " << sample << std::endl;
 
       if (kdtree.radiusSearch(sample, radius, nn_indices, nn_dists) > 0)
       {

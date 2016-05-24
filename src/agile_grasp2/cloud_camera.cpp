@@ -178,6 +178,23 @@ void CloudCamera::subsampleUniformly(int num_samples)
 }
 
 
+void CloudCamera::subsampleSamples(const agile_grasp2::SamplesMsg& msg, int num_samples)
+{
+  sample_indices_.resize(num_samples);
+  for (int i = 0; i < num_samples; i++)
+  {
+    sample_indices_[i] = rand() % msg.samples.size();
+  }
+  samples_.resize(3, num_samples);
+
+  for (int i = 0; i < samples_.cols(); i++)
+  {
+    samples_.col(i) << msg.samples[sample_indices_[i]].x, msg.samples[sample_indices_[i]].y,
+      msg.samples[sample_indices_[i]].z;
+  }
+}
+
+
 void CloudCamera::writeNormalsToFile(const std::string& filename, const Eigen::Matrix3Xd& normals)
 {
   std::ofstream myfile;

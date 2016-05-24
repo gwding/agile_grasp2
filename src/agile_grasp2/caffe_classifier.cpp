@@ -82,13 +82,14 @@ std::vector<float> Classifier::Predict(const cv::Mat& img, bool use_softmax)
 
   Preprocess(img, &input_channels);
 
-  const vector<Blob<float>*>& result = net_->ForwardPrefilled();
+  const vector<Blob<float>*>& result = net_->Forward();
+
+//  const vector<Blob<float>*>& result = net_->ForwardPrefilled();
 //  std::cout << result.size() << "\n";
 //  const float* prob_vec = result[0]->cpu_data();
 //  std::cout << "prob_vec: " << prob_vec[0] << " " << prob_vec[1] << std::endl;
 
   /* Copy the output layer to a std::vector */
-
   boost::shared_ptr<caffe::Blob<float> > output_layer;
   if (use_softmax)
     output_layer = net_->blob_by_name("prob");
