@@ -39,6 +39,6 @@
     <param name="min_score_diff" value="800" /> <!-- March Experiments -->
     
     <!-- Grasp Selection -->
-    <param name="num_selected" value="100" />    
+    <param name="num_selected" value="20" />    
 	</node>
 </launch>

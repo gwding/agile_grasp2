@@ -319,11 +319,34 @@ void Plot::runViewer(boost::shared_ptr<pcl::visualization::PCLVisualizer>& viewe
 boost::shared_ptr<pcl::visualization::PCLVisualizer> Plot::createViewer(std::string title)
 {
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer(title));  
-  viewer->initCameraParameters();
+//  viewer->initCameraParameters();
   viewer->setPosition(0, 0);
   viewer->setSize(640, 480);
   viewer->setBackgroundColor(1.0, 1.0, 1.0);
+
+  pcl::visualization::Camera camera;
+  camera.clip[0] = 0.00130783;
+  camera.clip[1] = 1.30783;
+  camera.focal[0] = 0.776838;
+  camera.focal[1] = -0.095644;
+  camera.focal[2] = -0.18991;
+  camera.pos[0] = 0.439149;
+  camera.pos[1] = -0.10342;
+  camera.pos[2] = 0.111626;
+  camera.view[0] = 0.666149;
+  camera.view[1] = -0.0276846;
+  camera.view[2] = 0.745305;
+  camera.fovy = 0.8575;
+  camera.window_pos[0] = 0;
+  camera.window_pos[1] = 0;
+  camera.window_size[0] = 640;
+  camera.window_size[1] = 480;
+
+  viewer->setCameraParameters(camera);
+//  viewer->updateCamera();
+
   // viewer->addCoordinateSystem(0.5, 0);
+
   return viewer;
 }
 
