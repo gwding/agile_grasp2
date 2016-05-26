@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, Andreas ten Pas
+ *  Copyright (c) 2016, Andreas ten Pas
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
