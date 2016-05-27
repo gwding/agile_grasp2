@@ -36,7 +36,7 @@
 #include <Eigen/Dense>
 
 #include <pcl/filters/random_sample.h>
-#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/kdtree/kdtree.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/point_cloud.h>
 
@@ -57,8 +57,8 @@ typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
  *
  * \brief Search for grasp hypotheses.
  * 
- * This class searches for grasp hypotheses in a point cloud by first fitting a quadratic surface 
- * to a small, local point neighborhood, and then finding geometrically feasible grasp hypotheses for 
+ * This class searches for grasp hypotheses in a point cloud by first calculating a local reference frame
+ * for a small point neighborhood, and then finding geometrically feasible grasp hypotheses for
  * a larger point neighborhood. It can also estimate whether the grasp is antipodal from the normals of 
  * the point neighborhood.
  * 

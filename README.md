@@ -13,7 +13,7 @@ This package localizes antipodal grasps in 3D point clouds. AGILE stands for **A
 [High precision grasp pose detection in dense clutter](http://arxiv.org/abs/1603.01564). *agile_grasp 2.0* is an improved 
 version of our previous package, [agile_grasp](http://wiki.ros.org/agile_grasp).
 
-The package already comes with pre-trained machine learning classifiers and can be used (almost) out-of-the-box with 
+The package already comes with a pre-trained machine learning classifier and can be used (almost) out-of-the-box with 
 RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as point clouds stored as *.pcd files.
 
 
@@ -37,8 +37,8 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
    $ ln -s ../build .
    ```
    
-   If the first line gives the error *Manually-specified variables were not used by the project: BUILD_SHARED_LIB*, 
-   just run the first line again.
+   If the second line gives the error *Manually-specified variables were not used by the project: BUILD_SHARED_LIB*, 
+   just run the second line again.
 3. Clone the agile_grasp 2.0 repository into your ros workspace: 
 
    ```

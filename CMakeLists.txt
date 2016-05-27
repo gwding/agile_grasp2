@@ -125,6 +125,7 @@ add_library(caffe_classifier src/${PROJECT_NAME}/caffe_classifier.cpp)
 add_library(classification_node src/nodes/classification_node.cpp)
 add_library(cloud_camera src/${PROJECT_NAME}/cloud_camera.cpp)
 add_library(finger_hand src/${PROJECT_NAME}/finger_hand.cpp)
+add_library(grasp_detector src/${PROJECT_NAME}/grasp_detector.cpp)
 add_library(grasp_detection_node src/nodes/grasp_detection_node.cpp)
 add_library(grasp_hypothesis src/${PROJECT_NAME}/grasp_hypothesis.cpp)
 add_library(hand_search src/${PROJECT_NAME}/hand_search.cpp)
@@ -150,7 +151,9 @@ target_link_libraries(cloud_camera ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(detect_grasps_file grasp_detection_node ${PCL_LIBRARIES})
 target_link_libraries(detect_grasps grasp_detection_node ${PCL_LIBRARIES})
 target_link_libraries(gpd_classification ${Caffe_LIBRARIES})
-target_link_libraries(grasp_detection_node caffe_classifier cloud_camera hand_search handle_search learning plot 
+target_link_libraries(grasp_detection_node caffe_classifier cloud_camera grasp_detector hand_search handle_search learning plot 
+  ${PCL_LIBRARIES})
+target_link_libraries(grasp_detector caffe_classifier cloud_camera hand_search handle_search learning plot 
   ${PCL_LIBRARIES})
 target_link_libraries(grasp_hypothesis ${catkin_LIBRARIES})
 target_link_libraries(hand_search antipodal cloud_camera finger_hand grasp_hypothesis plot quadric ${PCL_LIBRARIES})
