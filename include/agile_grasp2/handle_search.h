@@ -62,12 +62,8 @@ public:
   /**
    * \brief Search for handles given a list of grasp hypotheses.
    * \param hand_list the list of grasp hypotheses
-   * \param min_inliers the minimum number of grasp hypothesis contained in a handle
-   * \param min_length the minimum length of a handle
-   * \return the list of handles found
   */
-  void findClusters(const std::vector<GraspHypothesis>& hand_list, std::vector<Handle>& handles,
-    std::vector<Eigen::Vector3d>& pos_deltas);
+  std::vector<GraspHypothesis> findClusters(const std::vector<GraspHypothesis>& hand_list);
 
 	/**
 	 * \brief Search for handles given a list of grasp hypotheses.
@@ -77,6 +73,11 @@ public:
 	 * \return the list of handles found
 	*/
 	std::vector<Handle> findHandles(const std::vector<GraspHypothesis>& hand_list);
+
+	int getMinInliers() const
+	{
+	  return min_inliers_;
+	}
 
   void setMinInliers(int min_inliers)
   {

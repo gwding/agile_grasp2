@@ -1,20 +1,17 @@
 #include <agile_grasp2/handle_search.h>
 
 
-void HandleSearch::findClusters(const std::vector<GraspHypothesis>& hand_list, std::vector<Handle>& handles,
-  std::vector<Eigen::Vector3d>& pos_deltas)
+std::vector<GraspHypothesis> HandleSearch::findClusters(const std::vector<GraspHypothesis>& hand_list)
 {
   const double AXIS_ALIGN_ANGLE_THRESH = 15.0 * M_PI/180.0;
   const double AXIS_ALIGN_DIST_THRESH = 0.005;
   const double MAX_DIST_THRESH = 0.05;
 
-  handles.resize(0);
-  pos_deltas.resize(0);
+  std::vector<GraspHypothesis> hands_out;
 
   for (int i = 0; i < hand_list.size(); i++)
   {
-    std::vector<int> inliers(0);
-    int num_inliers = 1;
+    int num_inliers = 0;
     Eigen::Vector3d grasp_pos_delta = Eigen::Vector3d::Zero();
     Eigen::Matrix3d axis_outer_prod = hand_list[i].getAxis() * hand_list[i].getAxis().transpose();
 
@@ -42,23 +39,24 @@ void HandleSearch::findClusters(const std::vector<GraspHypothesis>& hand_list, s
       bool inlier_binary = axis_aligned_binary && delta_pos_mag_binary && delta_pos_proj_mag_binary;
       if (inlier_binary)
       {
-        inliers.push_back(j);
+        num_inliers++;
         grasp_pos_delta += hand_list[j].getGraspBottom();
       }
     }
 
-    if (inliers.size() >= min_inliers_)
+    if (num_inliers >= min_inliers_)
     {
-      pos_deltas.push_back((grasp_pos_delta / (double) inliers.size()) - hand_list[i].getGraspBottom());
-      Handle handle(hand_list, inliers, i);
-      handle.setGraspSurface(handle.getGraspSurface() + pos_deltas[pos_deltas.size() - 1]);
-      handle.setGraspBottom(handle.getGraspBottom() + pos_deltas[pos_deltas.size() - 1]);
-      handle.setGraspTop(handle.getGraspTop() + pos_deltas[pos_deltas.size() - 1]);
-      handle.setScore(hand_list[i].getScore());
-      handles.push_back(handle);
-      std::cout << "handle found with " << inliers.size() << " inliers\n";
+      grasp_pos_delta = grasp_pos_delta / (double) num_inliers - hand_list[i].getGraspBottom();
+      std::cout << "grasp " << i << ", num_inliers: " << num_inliers << ", pos_delta: " << grasp_pos_delta.transpose() << "\n";
+      GraspHypothesis hand = hand_list[i];
+      hand.setGraspSurface(hand.getGraspSurface() + grasp_pos_delta);
+      hand.setGraspBottom(hand.getGraspBottom() + grasp_pos_delta);
+      hand.setGraspTop(hand.getGraspTop() + grasp_pos_delta);
+      hands_out.push_back(hand);
     }
   }
+
+  return hands_out;
 }
 
 

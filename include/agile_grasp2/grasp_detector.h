@@ -144,6 +144,7 @@ private:
   std::vector<double> camera_pose_;
   int num_samples_;
   double min_score_diff_;
+  int batch_size_;
   int num_selected_;
   double min_aperture_, max_aperture_;
   double outer_diameter_;

@@ -1,9 +1,7 @@
 #include <agile_grasp2/caffe_classifier.h>
 
 
-Classifier::Classifier(const string& model_file,
-                       const string& trained_file,
-                       const string& label_file)
+Classifier::Classifier(const string& model_file, const string& trained_file, const string& label_file)
 {
 #ifdef CPU_ONLY
   Caffe::set_mode(Caffe::CPU);
@@ -66,6 +64,137 @@ std::vector<Prediction> Classifier::Classify(const cv::Mat& img, bool use_softma
   }
 
   return predictions;
+}
+
+
+std::vector< std::vector<Prediction> > Classifier::ClassifyBatch(const std::vector<cv::Mat>& imgs, int num_classes)
+{
+  std::vector<float> output_batch = PredictBatch(imgs);
+  std::vector< std::vector<Prediction> > predictions(imgs.size(), std::vector<Prediction>(num_classes));
+//  std::cout << "imgs.size(): " << imgs.size() << std::endl;
+
+  for(int j = 0; j < imgs.size(); j++)
+  {
+    std::vector<float> output(output_batch.begin() + j*num_classes, output_batch.begin() + (j+1)*num_classes);
+    std::vector<Prediction> prediction_single(output.size());
+//    std::cout << "output.size(): " << output.size() << std::endl;
+
+    for (int i = 0; i < output.size(); i++)
+    {
+      prediction_single[i] = std::make_pair(labels_[i], output[i]);
+    }
+
+    predictions[j] = prediction_single;
+  }
+
+  return predictions;
+}
+
+
+std::vector<float> Classifier::PredictBatch(const std::vector<cv::Mat>& imgs)
+{
+  Blob<float>* input_layer = net_->input_blobs()[0];
+
+  input_layer->Reshape(imgs.size(), num_channels_, input_geometry_.height, input_geometry_.width);
+
+  /* Forward dimension change to all layers. */
+  net_->Reshape();
+
+  std::vector< std::vector<cv::Mat> > input_batch;
+  WrapBatchInputLayer(&input_batch);
+
+  PreprocessBatch(imgs, &input_batch);
+
+  net_->Forward();
+
+  /* Copy the output layer to a std::vector */
+//  Blob<float>* output_layer = net_->output_blobs()[0];
+//  const float* begin = output_layer->cpu_data();
+//  const float* end = begin + output_layer->channels()*imgs.size();
+//  return std::vector<float>(begin, end);
+
+  /* Copy the output layer to a std::vector */
+   boost::shared_ptr<caffe::Blob<float> > output_layer;
+//   if (use_softmax)
+//     output_layer = net_->blob_by_name("prob");
+//   else
+   output_layer = net_->blob_by_name("ip2");
+
+   const float* begin = output_layer->cpu_data();
+   const float* end = begin + output_layer->channels()*imgs.size();
+
+   return std::vector<float>(begin, end);
+}
+
+
+void Classifier::WrapBatchInputLayer(std::vector< std::vector<cv::Mat> > *input_batch)
+{
+  Blob<float>* input_layer = net_->input_blobs()[0];
+
+  int width = input_layer->width();
+  int height = input_layer->height();
+  int num = input_layer->num();
+  float* input_data = input_layer->mutable_cpu_data();
+
+  for ( int j = 0; j < num; j++)
+  {
+    std::vector<cv::Mat> input_channels;
+
+    for (int i = 0; i < input_layer->channels(); ++i)
+    {
+      cv::Mat channel(height, width, CV_32FC1, input_data);
+      input_channels.push_back(channel);
+      input_data += width * height;
+    }
+
+    input_batch -> push_back(vector<cv::Mat>(input_channels));
+  }
+
+//  cv::imshow("bla", input_batch->at(1).at(0));
+  cv::waitKey(1);
+}
+
+
+void Classifier::PreprocessBatch(const std::vector<cv::Mat> imgs, std::vector< std::vector<cv::Mat> >* input_batch)
+{
+  for (int i = 0 ; i < imgs.size(); i++)
+  {
+    cv::Mat img = imgs[i];
+    std::vector<cv::Mat> *input_channels = &(input_batch->at(i));
+
+    /* Convert the input image to the input image format of the network. */
+    cv::Mat sample;
+    if (img.channels() == 3 && num_channels_ == 1)
+      cv::cvtColor(img, sample, CV_BGR2GRAY);
+    else if (img.channels() == 4 && num_channels_ == 1)
+      cv::cvtColor(img, sample, CV_BGRA2GRAY);
+    else if (img.channels() == 4 && num_channels_ == 3)
+      cv::cvtColor(img, sample, CV_BGRA2BGR);
+    else if (img.channels() == 1 && num_channels_ == 3)
+      cv::cvtColor(img, sample, CV_GRAY2BGR);
+    else
+      sample = img;
+
+    cv::Mat sample_resized;
+    if (sample.size() != input_geometry_)
+      cv::resize(sample, sample_resized, input_geometry_);
+    else
+      sample_resized = sample;
+
+    cv::Mat sample_float;
+    if (num_channels_ == 3)
+      sample_resized.convertTo(sample_float, CV_32FC3);
+    else
+      sample_resized.convertTo(sample_float, CV_32FC1);
+
+//    cv::Mat sample_normalized;
+//    cv::subtract(sample_float, mean_, sample_normalized);
+
+    /* This operation will write the separate BGR planes directly to the
+     * input layer of the network because it is wrapped by the cv::Mat
+     * objects in input_channels. */
+    cv::split(sample_float, *input_channels);
+  }
 }
 
 

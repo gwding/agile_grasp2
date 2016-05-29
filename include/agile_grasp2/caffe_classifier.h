@@ -63,8 +63,16 @@ public:
 
   std::vector<Prediction> Classify(const cv::Mat& img, bool use_softmax = false);
 
+  std::vector< std::vector<Prediction> > ClassifyBatch(const std::vector<cv::Mat>& imgs, int num_classes);
+
 
 private:
+
+  std::vector<float> PredictBatch(const std::vector<cv::Mat>& imgs);
+
+  void WrapBatchInputLayer(std::vector< std::vector<cv::Mat> > *input_batch);
+
+  void PreprocessBatch(const std::vector<cv::Mat> imgs, std::vector< std::vector<cv::Mat> >* input_batch);
 
   std::vector<float> Predict(const cv::Mat& img, bool use_softmax = false);
 

@@ -90,6 +90,95 @@ void Plot::plotFingers(const std::vector<GraspHypothesis>& hand_list, const Poin
 }
 
 
+void Plot::plotFingers(const std::vector<Handle>& hand_list, const PointCloudRGBA::Ptr& cloud,
+  std::string str, double outer_diameter)
+{
+  const int WIDTH = pcl::visualization::PCL_VISUALIZER_LINE_WIDTH;
+
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = createViewer(str);
+
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> rgb(cloud);
+  viewer->addPointCloud<pcl::PointXYZRGBA>(cloud, rgb, "cloud");
+  viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
+
+  //~ PointCloudRGBA::Ptr cloud_fingers(new PointCloudRGBA);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_fingers(new pcl::PointCloud<pcl::PointXYZ>);
+
+  for (int i = 0; i < hand_list.size(); i++)
+  {
+    //~ pcl::PointXYZRGBA pc;
+    pcl::PointXYZ pc;
+    pc.getVector3fMap() = hand_list[i].getGraspBottom().cast<float>();
+//    double width = hand_list[i].getGraspWidth();
+    double width = outer_diameter;
+    double hw = 0.5 * width;
+    double step = hw / 30.0;
+    Eigen::Vector3d left_bottom = hand_list[i].getGraspBottom() + hw * hand_list[i].getBinormal();
+    Eigen::Vector3d right_bottom = hand_list[i].getGraspBottom() - hw * hand_list[i].getBinormal();
+    //~ pcl::PointXYZRGBA p1, p2;
+    pcl::PointXYZ p1, p2;
+    p1.getVector3fMap() = left_bottom.cast<float>();
+    p2.getVector3fMap() = right_bottom.cast<float>();
+    cloud_fingers->points.push_back(pc);
+    cloud_fingers->points.push_back(p1);
+    cloud_fingers->points.push_back(p2);
+
+    for (double j=step; j < hw; j+=step)
+    {
+      Eigen::Vector3d lb, rb, a;
+      lb = hand_list[i].getGraspBottom() + j * hand_list[i].getBinormal();
+      rb = hand_list[i].getGraspBottom() - j * hand_list[i].getBinormal();
+      a = hand_list[i].getGraspBottom() - j * hand_list[i].getApproach();
+      //~ pcl::PointXYZRGBA plb, prb, pa;
+      pcl::PointXYZ plb, prb, pa;
+      plb.getVector3fMap() = lb.cast<float>();
+      prb.getVector3fMap() = rb.cast<float>();
+      pa.getVector3fMap() = a.cast<float>();
+      cloud_fingers->points.push_back(plb);
+      cloud_fingers->points.push_back(prb);
+      cloud_fingers->points.push_back(pa);
+    }
+
+    double dist = (hand_list[i].getGraspTop() - hand_list[i].getGraspBottom()).norm();
+    step = dist / 40.0;
+    for (double j=step; j < dist; j+=step)
+    {
+      Eigen::Vector3d lt, rt;
+      lt = left_bottom + j * hand_list[i].getApproach();
+      rt = right_bottom + j * hand_list[i].getApproach();
+      //~ pcl::PointXYZRGBA plt, prt;
+      pcl::PointXYZ plt, prt;
+      plt.getVector3fMap() = lt.cast<float>();
+      prt.getVector3fMap() = rt.cast<float>();
+      cloud_fingers->points.push_back(plt);
+      cloud_fingers->points.push_back(prt);
+    }
+
+    //~ std::string istr = boost::lexical_cast<std::string>(i);
+    //~ viewer->addLine<pcl::PointXYZ>(center, left_bottom, 0.0, 0.0, 1.0, "left_bottom_" + istr);
+    //~ viewer->addLine<pcl::PointXYZ>(center, right_bottom, 0.0, 0.0, 1.0, "right_bottom_" + istr);
+    //~ viewer->addLine<pcl::PointXYZ>(left_bottom, left_top, 0.0, 0.0, 1.0, "left_top_" + istr);
+    //~ viewer->addLine<pcl::PointXYZ>(right_bottom, right_top, 0.0, 0.0, 1.0, "right_top_" + istr);
+    //~ viewer->addLine<pcl::PointXYZ>(center, approach_center, 0.0, 0.0, 1.0, "approach_" + istr);
+//~
+    //~ viewer->setShapeRenderingProperties(WIDTH, 5, "left_bottom_" + boost::lexical_cast<std::string>(i));
+    //~ viewer->setShapeRenderingProperties(WIDTH, 5, "right_bottom_" + boost::lexical_cast<std::string>(i));
+    //~ viewer->setShapeRenderingProperties(WIDTH, 5, "left_top_" + boost::lexical_cast<std::string>(i));
+    //~ viewer->setShapeRenderingProperties(WIDTH, 5, "right_top_" + boost::lexical_cast<std::string>(i));
+    //~ viewer->setShapeRenderingProperties(WIDTH, 5, "approach_" + boost::lexical_cast<std::string>(i));
+    //~ viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION,
+      //~ pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "approach_" + boost::lexical_cast<std::string>(i));
+  }
+
+  viewer->addPointCloud<pcl::PointXYZ>(cloud_fingers, "fingers");
+  viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 0.8, "fingers");
+  viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "fingers");
+  viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.4, "fingers");
+
+  runViewer(viewer);
+}
+
+
 void Plot::plotHands(const std::vector<GraspHypothesis>& hand_list,
 	const std::vector<GraspHypothesis>& antipodal_hand_list, const PointCloudRGBA::Ptr& cloud, std::string str,
 	bool use_grasp_bottom)

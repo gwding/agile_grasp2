@@ -161,8 +161,7 @@ int main(int argc, char** argv)
   handle_search.setMinLength(min_handle_length);
   handle_search.setReuseInliers(reuse_inliers);
   std::vector<Handle> handles;
-  std::vector<Eigen::Vector3d> pos_deltas;
-  handle_search.findClusters(antipodal_hands, handles, pos_deltas);
+  handle_search.findHandles(antipodal_hands);
   ROS_INFO_STREAM("# handles: " << handles.size());
   plotter.plotHandles(handles, cloud_cam.getCloudOriginal(), "Clusters");
 

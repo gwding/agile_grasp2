@@ -15,69 +15,70 @@ const int GraspDetector::RVIZ = 2; ///< everything is plotted in rviz
 GraspDetector::GraspDetector(ros::NodeHandle& node) : use_incoming_samples_(false), voxel_size_(0.003)
 {
   // read hand search parameters
-    HandSearch::Parameters params;
-    node.getParam("workspace", workspace_);
-    node.getParam("camera_pose", camera_pose_);
-    node.param("num_samples", params.num_samples_, 1000);
-    num_samples_ = params.num_samples_;
-    node.getParam("sample_indices", indices_);
-    if (indices_.size() > 0)
-    {
-      num_samples_ = indices_.size();
-      params.num_samples_ = num_samples_;
-      ROS_INFO_STREAM("params.num_samples_: " << params.num_samples_ << ", num_samples: " << num_samples_);
-    }
-    node.param("num_threads", params.num_threads_, 1);
-    node.param("nn_radius_taubin", params.nn_radius_taubin_, 0.01);
-    node.param("nn_radius_hands", params.nn_radius_hands_, 0.1);
-    node.param("num_orientations", params.num_orientations_, 8);
-    node.param("normal_estimation_method", params.normal_estimation_method_, 0);
-    node.param("voxelize", voxelize_, true);
-    node.param("filter_half_grasps", filter_half_grasps_, true);
+  HandSearch::Parameters params;
+  node.getParam("workspace", workspace_);
+  node.getParam("camera_pose", camera_pose_);
+  node.param("num_samples", params.num_samples_, 1000);
+  num_samples_ = params.num_samples_;
+  node.getParam("sample_indices", indices_);
+  if (indices_.size() > 0)
+  {
+    num_samples_ = indices_.size();
+    params.num_samples_ = num_samples_;
+    ROS_INFO_STREAM("params.num_samples_: " << params.num_samples_ << ", num_samples: " << num_samples_);
+  }
+  node.param("num_threads", params.num_threads_, 1);
+  node.param("nn_radius_taubin", params.nn_radius_taubin_, 0.01);
+  node.param("nn_radius_hands", params.nn_radius_hands_, 0.1);
+  node.param("num_orientations", params.num_orientations_, 8);
+  node.param("normal_estimation_method", params.normal_estimation_method_, 0);
+  node.param("voxelize", voxelize_, true);
+  node.param("filter_half_grasps", filter_half_grasps_, true);
 
-    // read hand geometry parameters
-    node.param("finger_width", params.finger_width_, 0.01);
-    node.param("hand_outer_diameter", params.hand_outer_diameter_, 0.09);
-    outer_diameter_ = params.hand_outer_diameter_;
-    node.param("hand_depth", params.hand_depth_, 0.06);
-    node.param("hand_height", params.hand_height_, 0.02);
-    node.param("init_bite", params.init_bite_, 0.015);
+  // read hand geometry parameters
+  node.param("finger_width", params.finger_width_, 0.01);
+  node.param("hand_outer_diameter", params.hand_outer_diameter_, 0.09);
+  outer_diameter_ = params.hand_outer_diameter_;
+  node.param("hand_depth", params.hand_depth_, 0.06);
+  node.param("hand_height", params.hand_height_, 0.02);
+  node.param("init_bite", params.init_bite_, 0.015);
 
-    hand_search_.setParameters(params);
+  hand_search_.setParameters(params);
 
-    // read classification parameters
-    std::string model_file, trained_file, label_file;
-    node.param("antipodal_mode", antipodal_mode_, PREDICTION);
-    node.param("model_file", model_file, std::string(""));
-    node.param("trained_file", trained_file, std::string(""));
-    node.param("label_file", label_file, std::string(""));
-    node.param("min_score_diff", min_score_diff_, 500.0);
-    classifier_ = new Classifier(model_file, trained_file, label_file);
-    learning_  = new Learning(60, params.num_threads_);
+  // read classification parameters
+  std::string model_file, trained_file, label_file;
+  node.param("antipodal_mode", antipodal_mode_, PREDICTION);
+  node.param("model_file", model_file, std::string(""));
+  node.param("trained_file", trained_file, std::string(""));
+  node.param("label_file", label_file, std::string(""));
+  node.param("min_score_diff", min_score_diff_, 500.0);
+  node.param("batch_size", batch_size_, 10);
+  classifier_ = new Classifier(model_file, trained_file, label_file);
+  learning_  = new Learning(60, params.num_threads_);
 
-    // read handle search parameters
-    int min_inliers;
-    double min_handle_length;
-    bool reuse_inliers;
-    node.param("min_inliers", min_inliers, 5);
-    node.param("min_length", min_handle_length, 0.005);
-    node.param("reuse_inliers", reuse_inliers, true);
-    handle_search_.setMinInliers(min_inliers);
-    handle_search_.setMinLength(min_handle_length);
-    handle_search_.setReuseInliers(reuse_inliers);
+  // read handle search parameters
+  int min_inliers;
+  double min_handle_length;
+  bool reuse_inliers;
+  node.param("min_inliers", min_inliers, 0);
+  node.param("min_length", min_handle_length, 0.005);
+  node.param("reuse_inliers", reuse_inliers, true);
+  handle_search_.setMinInliers(min_inliers);
+  handle_search_.setMinLength(min_handle_length);
+  handle_search_.setReuseInliers(reuse_inliers);
 
-    // read grasp selection parameters
-    std::vector<double> gripper_width_range(2);
-    gripper_width_range[0] = 0.03;
-    gripper_width_range[1] = 0.07;
-    node.param("num_selected", num_selected_, 50);
-    node.getParam("gripper_width_range", gripper_width_range);
-    min_aperture_ = gripper_width_range[0];
-    max_aperture_ = gripper_width_range[1];
+  // read grasp selection parameters
+  std::vector<double> gripper_width_range(2);
+  gripper_width_range[0] = 0.03;
+  gripper_width_range[1] = 0.07;
+  node.param("num_selected", num_selected_, 50);
+  node.getParam("gripper_width_range", gripper_width_range);
+  min_aperture_ = gripper_width_range[0];
+  max_aperture_ = gripper_width_range[1];
 
-    // read plotting parameters
-    node.param("plot_mode", plot_mode_, PCL);
-    node.param("only_plot_output", only_plot_output_, true);
+  // read plotting parameters
+  node.param("plot_mode", plot_mode_, PCL);
+  node.param("only_plot_output", only_plot_output_, true);
 }
 
 
@@ -182,19 +183,32 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
     cams_mat.col(1) = cam_tf_right.block<3, 1>(0, 3);
     std::vector<cv::Mat> image_list = learning_->createGraspImages(hands_filtered, cams_mat, false, false);
     std::cout << " done\n";
-    for (int i = 0; i < image_list.size(); i++)
+    double t0_prediction = omp_get_wtime();
+    int num_iterations = (int) ceil(image_list.size() / (double) batch_size_);
+    std::cout << "num_iterations: " << num_iterations << "\n";
+    for (int i = 0; i < num_iterations; i++)
     {
-      std::vector<Prediction> predictions = classifier_->Classify(image_list[i]);
+      std::vector<cv::Mat>::iterator end_it;
+      if (i < num_iterations - 1)
+        end_it = image_list.begin() + (i+1)*100;
+      else
+        end_it =  image_list.end();
+      std::vector<cv::Mat> sub_image_list(image_list.begin() + i*100, end_it);
+      std::vector< std::vector<Prediction> > predictions = classifier_->ClassifyBatch(sub_image_list, 2);
 
-      double score = predictions[1].second - predictions[0].second;
-
-      if (score >= min_score_diff_)
+      for (int j = 0; j < predictions.size(); j++)
       {
-        antipodal_hands.push_back(hands_filtered[i]);
-        antipodal_hands[antipodal_hands.size()-1].setFullAntipodal(true);
-        antipodal_hands[antipodal_hands.size()-1].setScore(score);
+        double score = predictions[j][1].second - predictions[j][0].second;
+//        std::cout << i*100 + j << ", " <<  score << "\n";
+        if (score >= min_score_diff_)
+        {
+          antipodal_hands.push_back(hands_filtered[i*100+j]);
+          antipodal_hands[antipodal_hands.size()-1].setFullAntipodal(true);
+          antipodal_hands[antipodal_hands.size()-1].setScore(score);
+        }
       }
     }
+    std::cout << "batch prediction time: " << omp_get_wtime() - t0_prediction << std::endl;
   }
   else if (antipodal_mode_ == GEOMETRIC)
   {
@@ -207,12 +221,19 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
     }
   }
   ROS_INFO_STREAM("# antipodal grasps: " << antipodal_hands.size());
-  if (!only_plot_output_ && plot_mode_ == PCL)
-  {
+//  if (!only_plot_output_ && plot_mode_ == PCL)
+//  {
     plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
+//  }
+
+  // 4. Find grasp clusters.
+  if (handle_search_.getMinInliers() > 0)
+  {
+    antipodal_hands = handle_search_.findClusters(antipodal_hands);
+    plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Clusters");
   }
 
-  // 4. Select the <num_selected_> highest ranking grasps.
+  // 5. Select the <num_selected_> highest ranking grasps.
   std::vector<GraspHypothesis> hands_selected;
   if (antipodal_hands.size() > num_selected_)
   {
