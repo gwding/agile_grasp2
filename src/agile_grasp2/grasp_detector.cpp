@@ -221,10 +221,10 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
     }
   }
   ROS_INFO_STREAM("# antipodal grasps: " << antipodal_hands.size());
-//  if (!only_plot_output_ && plot_mode_ == PCL)
-//  {
+  if (!only_plot_output_ && plot_mode_ == PCL)
+  {
     plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Antipodal Grasps");
-//  }
+  }
 
   // 4. Find grasp clusters.
   if (handle_search_.getMinInliers() > 0)

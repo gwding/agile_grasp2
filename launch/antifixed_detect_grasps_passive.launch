@@ -40,6 +40,10 @@
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
     <param name="min_score_diff" value="200" /> <!-- March Experiments -->
     <!-- <param name="min_score_diff" value="0" /> --> <!-- comparison -->
+    <param name="batch_size" value="100" />
+    
+    <!-- Clustering -->
+    <param name="min_inliers" value="5" />
     
     <!-- Grasp Selection -->
     <param name="num_selected" value="1000" />
