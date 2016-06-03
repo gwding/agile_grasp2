@@ -88,9 +88,9 @@ workspace filtering, so avoid voxelization and manual indexing.
 
 ## 7) Parameters
 
-The most important parameters are cloud_type and cloud_topic to define the input point cloud, and workspace and 
-num_samples to define the workspace dimensions and the number of grasp hypotheses to be sampled. The other parameters 
-only need to be modified in special cases.
+The most important parameters are *cloud_type* and *cloud_topic* which define the type of the input point cloud and from 
+which topic the cloud is received, and *workspace* and *num_samples* which define the workspace dimensions and the 
+number of grasp hypotheses to be sampled. The other parameters only need to be modified in special cases.
 
 #### Input
 * cloud_type: the type of the input point cloud. 
@@ -99,6 +99,7 @@ only need to be modified in special cases.
   * 2: agile_grasp/CloudSized
   * 3: agile_grasp/CloudIndexed.
 * cloud_topic: the ROS topic from which the input point cloud is received.
+* samples_topic: the ROS topic from which the input samples are received.
 
 #### Visualization
 * plot_mode: what type of visualization is used (0: no visualization, 1: PCL, 2: rviz (not supported yet))
@@ -131,6 +132,10 @@ only need to be modified in special cases.
 * trained_file: the Caffe model file that contains the weights for the network.
 * label_file: a txt file that contains the label for each class.
 * min_score_diff: the minimum difference between the positive and the negative score for a grasp to be classfied as positive.
+* batch_size: the number of images used per batch in Caffe (larger batch size => larger memory usage) 
+
+#### Clustering
+* min_inliers: the minimum number of grasps required to form a cluster
 
 #### Grasp Selection
 * num_selected: the number of selected grasps. If antipodal grasps are predicted/calculated, then the selected grasps will be 
