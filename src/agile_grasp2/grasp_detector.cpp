@@ -230,7 +230,10 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   if (handle_search_.getMinInliers() > 0)
   {
     antipodal_hands = handle_search_.findClusters(antipodal_hands);
-    plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Clusters");
+    if (!only_plot_output_ && plot_mode_ == PCL)
+    {
+      plotter.plotFingers(antipodal_hands, cloud_cam.getCloudOriginal(), "Clusters");
+    }
   }
 
   // 5. Select the <num_selected_> highest ranking grasps.
