@@ -180,17 +180,28 @@ void CloudCamera::subsampleUniformly(int num_samples)
 
 void CloudCamera::subsampleSamples(const agile_grasp2::SamplesMsg& msg, int num_samples)
 {
-  std::vector<int> seq(msg.samples.size());
-  for (int i = 0; i < seq.size(); i++)
+  if (num_samples < msg.samples.size())
   {
-    seq[i] = i;
-  }
-  std::random_shuffle(seq.begin(), seq.end());
+    std::vector<int> seq(msg.samples.size());
+    for (int i = 0; i < seq.size(); i++)
+    {
+      seq[i] = i;
+    }
+    std::random_shuffle(seq.begin(), seq.end());
 
-  samples_.resize(3, num_samples);
-  for (int i = 0; i < samples_.cols(); i++)
+    samples_.resize(3, num_samples);
+    for (int i = 0; i < samples_.cols(); i++)
+    {
+      samples_.col(i) << msg.samples[seq[i]].x, msg.samples[seq[i]].y, msg.samples[seq[i]].z;
+    }
+  }
+  else
   {
-    samples_.col(i) << msg.samples[seq[i]].x, msg.samples[seq[i]].y, msg.samples[seq[i]].z;
+    samples_.resize(3, msg.samples.size());
+    for (int i = 0; i < samples_.cols(); i++)
+    {
+      samples_.col(i) << msg.samples[i].x, msg.samples[i].y, msg.samples[i].z;
+    }
   }
 }
 
