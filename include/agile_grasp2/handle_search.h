@@ -63,7 +63,8 @@ public:
    * \brief Search for handles given a list of grasp hypotheses.
    * \param hand_list the list of grasp hypotheses
   */
-  std::vector<GraspHypothesis> findClusters(const std::vector<GraspHypothesis>& hand_list);
+  std::vector<GraspHypothesis> findClusters(const std::vector<GraspHypothesis>& hand_list,
+    bool remove_inliers = false);
 
 	/**
 	 * \brief Search for handles given a list of grasp hypotheses.

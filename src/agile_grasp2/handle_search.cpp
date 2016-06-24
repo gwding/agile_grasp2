@@ -1,23 +1,35 @@
 #include <agile_grasp2/handle_search.h>
 
 
-std::vector<GraspHypothesis> HandleSearch::findClusters(const std::vector<GraspHypothesis>& hand_list)
+std::vector<GraspHypothesis> HandleSearch::findClusters(const std::vector<GraspHypothesis>& hand_list,
+  bool remove_inliers)
 {
   const double AXIS_ALIGN_ANGLE_THRESH = 15.0 * M_PI/180.0;
   const double AXIS_ALIGN_DIST_THRESH = 0.005;
   const double MAX_DIST_THRESH = 0.05;
+//  const int max_inliers = 25;
 
   std::vector<GraspHypothesis> hands_out;
+  std::vector<bool> has_used;
+  if (remove_inliers)
+  {
+    has_used.resize(hand_list.size());
+    for (int i = 0; i < hand_list.size(); i++)
+    {
+      has_used[i] = false;
+    }
+  }
 
   for (int i = 0; i < hand_list.size(); i++)
   {
     int num_inliers = 0;
     Eigen::Vector3d grasp_pos_delta = Eigen::Vector3d::Zero();
     Eigen::Matrix3d axis_outer_prod = hand_list[i].getAxis() * hand_list[i].getAxis().transpose();
+    double avg_score = 0.0;
 
     for (int j = 0; j < hand_list.size(); j++)
     {
-      if (i == j)
+      if (i == j || (remove_inliers && has_used[j]))
         continue;
 
       // Which hands have an axis within <AXIS_ALIGN_ANGLE_THRESH> of this one?
@@ -41,17 +53,25 @@ std::vector<GraspHypothesis> HandleSearch::findClusters(const std::vector<GraspH
       {
         num_inliers++;
         grasp_pos_delta += hand_list[j].getGraspBottom();
+        avg_score += hand_list[j].getScore();
+        if (remove_inliers)
+          has_used[j] = true;
+//        if (num_inliers >= max_inliers)
+//          break;
       }
     }
 
     if (num_inliers >= min_inliers_)
     {
       grasp_pos_delta = grasp_pos_delta / (double) num_inliers - hand_list[i].getGraspBottom();
-      std::cout << "grasp " << i << ", num_inliers: " << num_inliers << ", pos_delta: " << grasp_pos_delta.transpose() << "\n";
+      avg_score = avg_score / (double) num_inliers;
+      std::cout << "grasp " << i << ", num_inliers: " << num_inliers << ", pos_delta: " << grasp_pos_delta.transpose()
+        << ", score: " << avg_score << "\n";
       GraspHypothesis hand = hand_list[i];
       hand.setGraspSurface(hand.getGraspSurface() + grasp_pos_delta);
       hand.setGraspBottom(hand.getGraspBottom() + grasp_pos_delta);
       hand.setGraspTop(hand.getGraspTop() + grasp_pos_delta);
+      hand.setScore(avg_score);
       hands_out.push_back(hand);
     }
   }
