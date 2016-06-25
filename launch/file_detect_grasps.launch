@@ -18,7 +18,7 @@
     <param name="filter_half_grasps" value="true"/>
       
     <!-- Hand Search -->
-    <rosparam param="workspace"> [0.57, 0.87, -0.3, 0.15, -0.22, 1] </rosparam>
+    <rosparam param="workspace"> [0.57, 0.87, -0.3, 0.15, -0.25, 1] </rosparam>
 <!--
     <rosparam param="workspace"> [-0.2, 0.2, -0.9, 0.3, 0.3, 0.8] </rosparam>
 -->
