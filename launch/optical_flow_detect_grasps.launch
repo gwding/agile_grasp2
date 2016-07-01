@@ -7,13 +7,13 @@
     <param name="samples_topic" value="" /> 
         
     <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
-    <param name="only_plot_output" value="true" />
+    <param name="only_plot_output" value="false" />
     <param name="save_hypotheses" value="false" />
     <param name="voxelize" value="false"/>
     <param name="filter_half_grasps" value="false"/>
     
     <!-- Hand Search -->
-    <rosparam param="workspace"> [0.00, 1.00, -1.00, 1.00, -0.25, 1.00] </rosparam>
+    <rosparam param="workspace"> [0.00, 1.00, -1.00, 1.00, -0.3, 1.00] </rosparam>
     <rosparam param="camera_pose"> [0, 0.445417,  0.895323,  0.215, 
                                     1, 0,         0,        -0.015, 
                                     0, 0.895323, -0.445417,  0.23, 

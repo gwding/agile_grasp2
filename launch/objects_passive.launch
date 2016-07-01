@@ -7,7 +7,7 @@
     <param name="samples_topic" value="/object_recognition_caffe/grasp_samples" />        
     
     <!-- Plotting -->
-    <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
             
     <!-- Hand Search -->    

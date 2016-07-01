@@ -4,14 +4,15 @@
     <param name="cloud_type" value="1" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp/CloudSized, 3: agile_grasp/CloudIndexed -->
     <param name="use_service" value="false" />
     <param name="cloud_topic" value="/cloud_base" /> 
-    <param name="samples_topic" value="/object_recognition_caffe/grasp_samples" />        
+    <param name="samples_topic" value="" />
     
     <!-- Plotting -->
-    <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
-    <param name="only_plot_output" value="false" />
+    <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="only_plot_output" value="true" />
             
     <!-- Hand Search -->    
-    <rosparam param="workspace"> [0.5, 0.92, -0.4, 0.2, -0.25, 1] </rosparam>
+<!-- <rosparam param="workspace"> [0.48, 0.96, -0.38, 0.0, -0.25, 1] </rosparam> --> <!-- clutter -->
+    <rosparam param="workspace"> [0.48, 0.92, -0.6, 0.4, -0.25, 1] </rosparam>
     <rosparam param="camera_pose"> [] </rosparam>
     <param name="num_samples" value="10000" />
     <param name="num_threads" value="4" />    
@@ -36,7 +37,11 @@
     <param name="model_file" value="$(find agile_grasp2)/caffe/test_1batch2.prototxt" />
     <param name="trained_file" value="$(find agile_grasp2)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
-    <param name="min_score_diff" value="200" /> <!-- March Experiments -->
+    <param name="min_score_diff" value="300" />
+    <param name="batch_size" value="100" />
+    
+    <!-- Clustering -->
+    <param name="min_inliers" value="5" />
     
     <!-- Grasp Selection -->
     <param name="num_selected" value="300" />    
