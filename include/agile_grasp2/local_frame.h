@@ -29,8 +29,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef QUADRIC_H
-#define QUADRIC_H
+#ifndef LOCAL_FRAME_H
+#define LOCAL_FRAME_H
 
 #include <Eigen/Dense>
 #include <pcl/point_cloud.h>
@@ -39,76 +39,34 @@
 #include <vector>
 
 
-/** Lapack function to solve the generalized eigenvalue problem */
-extern "C" void dggev_(const char* JOBVL, const char* JOBVR, const int* N, const double* A, const int* LDA,
-                       const double* B, const int* LDB, double* ALPHAR, double* ALPHAI, double* BETA, double* VL,
-                       const int* LDVL, double* VR, const int* LDVR, double* WORK, const int* LWORK, int* INFO);
-
-
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
 
 
-/** Quadric class
+/** LocalFrame class
  *
- * \brief Quadratic surface fit and local axes estimation
+ * \brief Local reference frame estimation
  * 
- * This class fits a quadratic surface to a point neighborhood and estimates the curvature axis, 
- * normal, and binormal for the surface fitted to a point neighborhood. To fit the quadratic 
- * surface, a method from the LAPACK library is used.
+ * This class estimates the local reference frame for a point neighborhood. The coordinate axes of the local frame are
+ * the curvature axis, normal, and binormal.
  * 
 */
-class Quadric
+class LocalFrame
 {
 public:
-
-  /**
-   * \brief Standard constructor.
-  */
-  Quadric() : is_deterministic_(false) { }
 
   /**
    * \brief Constructor.
    * \param T_cams the camera poses
    * \param sample the sample for which the point neighborhood was found
   */
-  Quadric(const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> >& T_cams,
+  LocalFrame(const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> >& T_cams,
     const Eigen::Vector3d& sample, int majority_cam_source);
 
-	/**
-	 * \brief Constructor.
-	 * \param T_cams the camera poses
-	 * \param input the input point cloud
-	 * \param sample the sample for which the point neighborhood was found
-	 * \param is_deterministic_ whether the local axes estimation is deterministic
-	*/
-  Quadric(const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> >& T_cams,
-    const PointCloudRGBA::Ptr& input, const Eigen::Vector3d& sample, bool is_deterministic);
-  
   /**
-     * \brief Estimate the local axes for the quadric fitted to the point neighborhood.
-     * \param indices the list of point cloud indices that belong to the point neighborhood
-     * \param cam_source the camera source for each point in the point cloud
-    */
-  void findTaubinNormalAxis(const std::vector<int> &indices, const Eigen::MatrixXi& cam_source);
-
-  /**
-	 * \brief Estimate the local axes for the quadric fitted to the point neighborhood.
-	 * \param indices the list of point cloud indices that belong to the point neighborhood
-	 * \param cam_source the camera source for each point in the point cloud
-	*/
-  void findTaubinNormalAxis(const std::vector<int> &indices, const Eigen::VectorXi& cam_source);
-
-  /**
-   * \brief Estimate the average normal axis for the quadric fitted to the point neighborhood.
+   * \brief Estimate the average normal axis for the point neighborhood.
    * \param normals the 3xn matrix of normals found for points in the point neighborhood
   */
   void findAverageNormalAxis(const Eigen::MatrixXd& normals);
-	
-	/**
-	 * \brief Fit a quadratic surface to a point neighborhood.
-	 * \param indices the list of point cloud indices that belong to the point neighborhood
-	*/
-	void fitQuadric(const std::vector<int>& indices, bool forces_PSD = false);
 
 	/**
 	 * \brief Set the input point cloud.
@@ -120,7 +78,7 @@ public:
 	}
 	
 	/**
-	 * \brief Print a description of the quadric to the system's standard output.
+	 * \brief Print a description of the local reference frame.
 	*/
 	void print();
 	
@@ -167,6 +125,10 @@ public:
 		return normal_;
 	}
 
+	/**
+	 * \brief Set the sample for the point neighborhood.
+	 * \param sample the sample to be used
+	 */
   void setSample(const Eigen::Vector3d& sample)
   {
     sample_ = sample;
@@ -175,36 +137,12 @@ public:
 
 private:
 
-	/**
-	 * \brief Unpack the parameters of the quadric.
-	*/
-	void unpackQuadric();
-	
-	/** \brief Solve the generalized Eigen problem A * v(j) = lambda(j) * B * v(j), where v
-   * are the Eigen vectors, and lambda are the Eigen values. The eigenvalues are stored as:
-   * (lambda(:, 1) + lambda(:, 2)*i)./lambda(:, 3). This method returns true if the Eigen
-   * problem is solved successfully.
-   * \param A the matrix A in the problem
-   * \param B the matrix B in the problem
-   * \param v the resultant Eigen vectors
-   * \param lambda the resultant Eigen vectors (see above)
-   * \return true if the solution process worked properly, false otherwise
-   */
-  bool solveGeneralizedEigenProblem(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& v,
-                                    Eigen::MatrixXd& lambda);
-
-  bool is_deterministic_; ///< whether the local axes estimation is deterministic
   Eigen::Matrix3Xd cam_origins_; ///< the camera positions
   Eigen::Vector3d sample_; ///< the sample for which the point neighborhood was found
   int majority_cam_source_; ///< the majority camera source
   PointCloudRGBA::Ptr input_; ///< the input point cloud
   Eigen::Vector3d curvature_axis_, normal_, binormal_; ///< the curvature, normal, and binormal axis
-  Eigen::Matrix<double, 10, 1> parameters_; ///< the parameters of the quadric (implicit form)
-  Eigen::Vector3d centroid_; ///< the centroid of the quadric
-  Eigen::Matrix3d covariance_matrix_; ///< the covariance matrix of the quadric
   double normals_ratio_; ///< the ratio between the normals of the quadric
-  
-  static const int TAUBIN_MATRICES_SIZE = 10; ///< size of matrices in Taubin Quadric Fitting
 };
 
 #endif // PCL_FEATURES_CURVATURE_ESTIMATION_TAUBIN_H_

@@ -9,7 +9,6 @@ message_generation pcl_conversions roscpp sensor_msgs std_msgs visualization_msg
 
 ## System dependencies are found with CMake's conventions
 find_package(Eigen REQUIRED)
-find_package(LAPACK REQUIRED)
 find_package(OpenCV)
 find_package(PCL REQUIRED)
 #~ find_package(VTK 6.0 REQUIRED NO_MODULE) # required in Fedora Core
@@ -89,8 +88,8 @@ catkin_package(
   handle
   handle_search
   learning
+  local_frame
   plot
-  quadric
  CATKIN_DEPENDS
 	cmake_modules
 	cv_bridge
@@ -105,7 +104,6 @@ catkin_package(
  DEPENDS
   Caffe
   Eigen
-  LAPACK
   OpenCV
   PCL  
 )
@@ -133,7 +131,7 @@ add_library(handle src/${PROJECT_NAME}/handle.cpp)
 add_library(handle_search src/${PROJECT_NAME}/handle_search.cpp)
 add_library(learning src/${PROJECT_NAME}/learning.cpp)
 add_library(plot src/${PROJECT_NAME}/plot.cpp)
-add_library(quadric src/${PROJECT_NAME}/quadric.cpp)
+add_library(local_frame src/${PROJECT_NAME}/local_frame.cpp)
 
 ## Declare a cpp executable
 add_executable(classify_grasps src/nodes/classify_grasps.cpp)
@@ -156,12 +154,12 @@ target_link_libraries(grasp_detection_node caffe_classifier cloud_camera grasp_d
 target_link_libraries(grasp_detector caffe_classifier cloud_camera hand_search handle_search learning plot 
   ${PCL_LIBRARIES})
 target_link_libraries(grasp_hypothesis ${catkin_LIBRARIES})
-target_link_libraries(hand_search antipodal cloud_camera finger_hand grasp_hypothesis plot quadric ${PCL_LIBRARIES})
+target_link_libraries(hand_search antipodal cloud_camera finger_hand grasp_hypothesis plot local_frame ${PCL_LIBRARIES})
 target_link_libraries(handle grasp_hypothesis)
 target_link_libraries(learning grasp_hypothesis handle ${OpenCV_LIBRARIES})
 target_link_libraries(handle_search handle ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-target_link_libraries(plot grasp_hypothesis handle quadric ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-target_link_libraries(quadric ${PCL_LIBRARIES} lapack)
+target_link_libraries(plot grasp_hypothesis handle local_frame ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(local_frame ${PCL_LIBRARIES})
 target_link_libraries(test_cnn caffe_classifier cloud_camera hand_search handle_search learning plot ${PCL_LIBRARIES})
 
 

@@ -16,13 +16,14 @@ version of our previous package, [agile_grasp](http://wiki.ros.org/agile_grasp).
 The package already comes with a pre-trained machine learning classifier and can be used (almost) out-of-the-box with 
 RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as point clouds stored as *.pcd files.
 
+If you like this package and use it in your own work, please cite our [arXiv paper](http://arxiv.org/abs/1603.01564).
+
 
 ## 2) Requirements
 
 1. [ROS Indigo](http://wiki.ros.org/indigo) (installation instructions for [Ubuntu](http://wiki.ros.org/indigo/Installation/Ubuntu))
-2. [Lapack](http://www.netlib.org/lapack/) (install in Ubuntu: `$ sudo apt-get install liblapack-dev`) 
-3. [OpenNI](http://wiki.ros.org/openni_launch) or a similar range sensor driver
-4. [Caffe](http://caffe.berkeleyvision.org/) 
+2. [OpenNI](http://wiki.ros.org/openni_launch) or a similar range sensor driver
+3. [Caffe](http://caffe.berkeleyvision.org/) 
 
 
 ## 3) Installation
@@ -63,8 +64,8 @@ RGBD cameras such as the Microsoft Kinect and the Asus Xtion Pro as well as poin
    $ roslaunch agile_grasp2 robot_detect_grasps.launch
    ```
 
-![Image Alt](readme/robot1.png)
-![Image Alt](readme/robot2.png)
+<img src="readme/robot1.png" alt="" style="width: 700px;"/>
+<img src="readme/robot2.png" alt="" style="width: 700px;"/>
 
 
 ## 5) Detect Grasp Poses in a PCD File
@@ -114,7 +115,6 @@ number of grasp hypotheses to be sampled. The other parameters only need to be m
 * nn_radius_hands: the neighborhood search radius for the grasp hypothesis search (in meters).
 * num_orientations: the number of hand orientations to be considered.
 * antipodal_mode: the output of the algorithm. 0: grasp hypotheses, 1: antipodal graps (prediction), 2: antipodal grasps (geometric).
-* normal_estimation_method: the method used to estimate normals. 0: Taubin quadric fitting, 1: PCL normal estimation.
 * voxelize: if the point cloud gets voxelized.
 * filter_half_grasps: if half-grasps are filtered out.
 * gripper_width_range: the aperture range of the robot hand: [aperture_min, aperture_max].
@@ -127,15 +127,14 @@ number of grasp hypotheses to be sampled. The other parameters only need to be m
 * init_bite: the initial amount that the hand extends into the object to be grasped.
 
 #### Classifier
-* images_directory: where images are stored (not used).
 * model_file: the Caffe prototxt file that specifies the network.
 * trained_file: the Caffe model file that contains the weights for the network.
 * label_file: a txt file that contains the label for each class.
 * min_score_diff: the minimum difference between the positive and the negative score for a grasp to be classfied as positive.
-* batch_size: the number of images used per batch in Caffe (larger batch size => larger memory usage) 
+* batch_size: the number of images used per batch in Caffe (larger batch size => faster, but larger memory usage) 
 
 #### Clustering
-* min_inliers: the minimum number of grasps required to form a cluster
+* min_inliers: the minimum number of grasps required to form a cluster.
 
 #### Grasp Selection
 * num_selected: the number of selected grasps. If antipodal grasps are predicted/calculated, then the selected grasps will be 

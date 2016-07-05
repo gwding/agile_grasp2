@@ -42,7 +42,7 @@
 
 #include <agile_grasp2/grasp_hypothesis.h>
 #include <agile_grasp2/handle.h>
-#include <agile_grasp2/quadric.h>
+#include <agile_grasp2/local_frame.h>
 
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
@@ -110,7 +110,7 @@ class Plot
 		 * \param quadric_list the list of quadrics to be plotted
 		 * \param cloud the point cloud to be plotted
 		*/
-		void plotLocalAxes(const std::vector<Quadric>& quadric_list, const PointCloudRGBA::Ptr& cloud);
+		void plotLocalAxes(const std::vector<LocalFrame>& quadric_list, const PointCloudRGBA::Ptr& cloud);
 		
 		/** 
 		 * \brief Plot the camera source for each point in the point cloud.

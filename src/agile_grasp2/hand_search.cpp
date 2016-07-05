@@ -19,17 +19,8 @@ std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& c
   double t0_normals = omp_get_wtime();
   if (cloud_cam.getNormals().cols() == 0)
   {
-    std::cout << "Estimating normals for all points";
-    if (normal_estimation_method_ == NORMAL_ESTIMATION_QUADRICS)
-    {
-      std::cout << " using quadrics\n";
-      calculateNormals(cloud_cam, kdtree, false);
-    }
-    else if (normal_estimation_method_ == NORMAL_ESTIMATION_OMP)
-    {
-      std::cout << " using pcl::NormalEstimationOMP\n";
-      calculateNormalsOMP(cloud_cam);
-    }
+    std::cout << "Estimating normals for all points using pcl::NormalEstimationOMP\n";
+    calculateNormalsOMP(cloud_cam);
   }
   else
   {
@@ -50,29 +41,19 @@ std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& c
     plot_.plotSamples(cloud_cam.getSampleIndices(), cloud_cam.getCloudProcessed());
   }
 
-  // 2. Fit quadrics.
-  std::cout << "Fitting quadrics ...\n";
-  std::vector<Quadric> quadrics;
-  if (normal_estimation_method_ == NORMAL_ESTIMATION_QUADRICS)
-  {
-    if (use_samples)
-      quadrics = fitQuadrics(cloud_cam, cloud_cam.getSamples(), nn_radius_taubin_, kdtree);
-    else
-      quadrics = fitQuadrics(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
-  }
-  else if (normal_estimation_method_ == NORMAL_ESTIMATION_OMP)
-  {
-    if (use_samples)
-      quadrics = calculateLocalFrames(cloud_cam, cloud_cam.getSamples(), nn_radius_taubin_, kdtree);
-    else
-      quadrics = calculateLocalFrames(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
-  }
+  // 2. Estimate local reference frames.
+  std::cout << "Estimating local reference frames ...\n";
+  std::vector<LocalFrame> frames;
+  if (use_samples)
+    frames = calculateLocalFrames(cloud_cam, cloud_cam.getSamples(), nn_radius_taubin_, kdtree);
+  else
+    frames = calculateLocalFrames(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
   if (plots_local_axes_)
-    plot_.plotLocalAxes(quadrics, cloud_cam.getCloudOriginal());
+    plot_.plotLocalAxes(frames, cloud_cam.getCloudOriginal());
 
   // 3. Generate grasp hypotheses.
   std::cout << "Finding hand poses ...\n";
-  std::vector<GraspHypothesis> hypotheses = evaluateHands(cloud_cam, quadrics, nn_radius_hands_, kdtree);
+  std::vector<GraspHypothesis> hypotheses = evaluateHands(cloud_cam, frames, nn_radius_hands_, kdtree);
 
   std::cout << "====> HAND SEARCH TIME: " << omp_get_wtime() - t0_total << std::endl;
 
@@ -94,20 +75,8 @@ void HandSearch::setParameters(const Parameters& params)
   nn_radius_hands_ = params.nn_radius_hands_;
   num_orientations_ = params.num_orientations_;
 
-  normal_estimation_method_ = params.normal_estimation_method_;
-
   cam_tf_left_ = params.cam_tf_left_;
   cam_tf_right_ = params.cam_tf_right_;
-}
-
-
-void HandSearch::calculateNormals(const CloudCamera& cloud_cam, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree,
-  bool plots_normals)
-{
-  std::vector<int> indices(cloud_cam.getCloudProcessed()->size());
-  for (int i = 0; i < indices.size(); i++)
-    indices[i] = i;
-  fitQuadrics(cloud_cam, indices, 0.01, kdtree, true, false);
 }
 
 
@@ -125,76 +94,13 @@ void HandSearch::calculateNormalsOMP(const CloudCamera& cloud_cam)
 }
 
 
-std::vector<Quadric> HandSearch::fitQuadrics(const CloudCamera& cloud_cam, const std::vector<int>& indices,
-  double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree, bool calculates_normals, bool forces_PSD)
-{
-  double t1 = omp_get_wtime();
-  std::vector<Quadric*> quadric_list(indices.size());
-  std::vector<int> nn_indices;
-  std::vector<float> nn_dists;
-  std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> > T_cams;
-  T_cams.push_back(cam_tf_left_);
-  T_cams.push_back(cam_tf_right_);
-
-  const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
-  const Eigen::MatrixXi& camera_source = cloud_cam.getCameraSource();
-
-#ifdef _OPENMP // parallelization using OpenMP
-#pragma omp parallel for private(nn_indices, nn_dists) num_threads(num_threads_)
-#endif
-  for (int i = 0; i < indices.size(); i++)
-  {
-    const pcl::PointXYZRGBA& sample = cloud->points[indices[i]];
-
-    if (kdtree.radiusSearch(sample, radius, nn_indices, nn_dists) > 0)
-    {
-      Eigen::MatrixXi nn_cam_source(camera_source.rows(), nn_indices.size());
-      for (int j = 0; j < nn_indices.size(); j++)
-        nn_cam_source.col(j) = camera_source.col(nn_indices[j]);
-
-      Eigen::Vector3d sample_eigen = sample.getVector3fMap().cast<double>();
-      Quadric* q = new Quadric(T_cams, cloud, sample_eigen, uses_determinstic_normal_estimation_);
-      q->fitQuadric(nn_indices, forces_PSD);
-      q->findTaubinNormalAxis(nn_indices, nn_cam_source);
-      quadric_list[i] = q;
-      if (calculates_normals)
-        cloud_normals_.col(indices[i]) = q->getNormal();
-    }
-  }
-
-  double delt1 = omp_get_wtime();
-
-  std::vector<Quadric> quadrics;
-  for (int i = 0; i < quadric_list.size(); i++)
-  {
-    if (quadric_list[i])
-    {
-      quadrics.push_back(*quadric_list[i]);
-//      quadric_list[i]->print(); // debugging
-//      std::cout << "\n";
-    }
-    delete quadric_list[i];
-  }
-  quadric_list.clear();
-
-  double t2 = omp_get_wtime();
-  std::cout << "Deletion done in " << t2 - delt1 << " sec.\n";
-  std::cout << "Fitted " << quadrics.size() << " quadrics in " << t2 - t1 << " sec.\n";
-
-//  quadric_list[0].print(); // debugging
-//  plot_.plotLocalAxes(quadric_list, cloud);
-
-  return quadrics;
-}
-
-
-std::vector<Quadric> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam,
+std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam,
   const std::vector<int>& indices, double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
 {
   const int MIN_NEIGHBORS = 20;
 
   double t1 = omp_get_wtime();
-  std::vector<Quadric*> quadric_list(indices.size());
+  std::vector<LocalFrame*> frames(indices.size());
   std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> > T_cams;
   std::vector<int> nn_indices;
   std::vector<float> nn_dists;
@@ -241,33 +147,31 @@ std::vector<Quadric> HandSearch::calculateLocalFrames(const CloudCamera& cloud_c
 
       Eigen::MatrixXd gradient_magnitude = ((nn_normals.cwiseProduct(nn_normals)).colwise().sum()).cwiseSqrt();
       nn_normals = nn_normals.cwiseQuotient(gradient_magnitude.replicate(3, 1));
-      Quadric* quadric = new Quadric(T_cams, sample.getVector3fMap().cast<double>(), majority_cam_source);
-      quadric->findAverageNormalAxis(nn_normals);
-      quadric_list[i] = quadric;
-//      quadric_list[i]->print();
+      LocalFrame* frame = new LocalFrame(T_cams, sample.getVector3fMap().cast<double>(), majority_cam_source);
+      frame->findAverageNormalAxis(nn_normals);
+      frames[i] = frame;
+//      frames[i]->print();
     }
   }
 
-  double delt1 = omp_get_wtime();
-  std::vector<Quadric> quadrics;
-  for (int i = 0; i < quadric_list.size(); i++)
+  std::vector<LocalFrame> frames_out;
+  for (int i = 0; i < frames.size(); i++)
   {
-    if (quadric_list[i])
-      quadrics.push_back(*quadric_list[i]);
-    delete quadric_list[i];
+    if (frames[i])
+      frames_out.push_back(*frames[i]);
+    delete frames[i];
   }
-  quadric_list.clear();
+  frames.clear();
 
   double t2 = omp_get_wtime();
-  std::cout << "Deletion done in " << t2 - delt1 << " sec.\n";
-  std::cout << "Fitted " << quadrics.size() << " quadrics in " << t2 - t1 << " sec.\n";
+  std::cout << "Fitted " << frames_out.size() << " local reference frames in " << t2 - t1 << " sec.\n";
 
-  return quadrics;
+  return frames_out;
 }
 
 
 std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_cam,
-  const std::vector<Quadric>& quadric_list, double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
+  const std::vector<LocalFrame>& frames, double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
 {
   double t1 = omp_get_wtime();
 
@@ -282,17 +186,17 @@ std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_
   Eigen::Matrix3Xd centered_neighborhood;
   const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
   const Eigen::MatrixXi& camera_source = cloud_cam.getCameraSource();
-  std::vector< std::vector<GraspHypothesis> > hand_lists(quadric_list.size(), std::vector<GraspHypothesis>(0));
+  std::vector< std::vector<GraspHypothesis> > hand_lists(frames.size(), std::vector<GraspHypothesis>(0));
 
 #ifdef _OPENMP // parallelization using OpenMP
 #pragma omp parallel for private(nn_indices, nn_dists, nn_normals, nn_cam_source, centered_neighborhood) num_threads(num_threads_)
 #endif
-  for (std::size_t i = 0; i < quadric_list.size(); i++)
+  for (std::size_t i = 0; i < frames.size(); i++)
   {
     pcl::PointXYZRGBA sample;
-    sample.x = quadric_list[i].getSample()(0);
-    sample.y = quadric_list[i].getSample()(1);
-    sample.z = quadric_list[i].getSample()(2);
+    sample.x = frames[i].getSample()(0);
+    sample.y = frames[i].getSample()(1);
+    sample.z = frames[i].getSample()(2);
 
     if (kdtree.radiusSearch(sample, radius, nn_indices, nn_dists) > 0)
     {
@@ -308,7 +212,7 @@ std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_
       }
 
       std::vector<GraspHypothesis> hands = calculateHand(centered_neighborhood, nn_normals, nn_cam_source,
-        quadric_list[i], angles);
+        frames[i], angles);
       if (hands.size() > 0)
         hand_lists[i] = hands;
     }
@@ -330,93 +234,14 @@ std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_
   return hypotheses;
 }
 
-std::vector<Quadric> HandSearch::fitQuadrics(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
-  double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree, bool calculates_normals, bool forces_PSD)
-{
-  const int MIN_NEIGHBORS = 20;
 
-    double t1 = omp_get_wtime();
-    std::vector<Quadric*> quadric_list(samples.cols());
-    std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> > T_cams;
-    std::vector<int> nn_indices;
-    std::vector<float> nn_dists;
-    Eigen::Matrix3Xd nn_normals;
-    Eigen::VectorXi num_source(cloud_cam.getCameraSource().rows());
-    T_cams.push_back(cam_tf_left_);
-    T_cams.push_back(cam_tf_right_);
-
-    const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
-    const Eigen::MatrixXi& camera_source = cloud_cam.getCameraSource();
-
-  #ifdef _OPENMP // parallelization using OpenMP
-  #pragma omp parallel for private(nn_indices, nn_dists, nn_normals) num_threads(num_threads_)
-  #endif
-    for (int i = 0; i < samples.cols(); i++)
-    {
-      pcl::PointXYZRGBA sample;
-      sample.x = samples(0,i);
-      sample.y = samples(1,i);
-      sample.z = samples(2,i);
-
-      if (kdtree.radiusSearch(sample, radius, nn_indices, nn_dists) > 0)
-      {
-        int nn_num_samples = 50;
-        nn_normals.setZero(3, std::min(nn_num_samples, (int) nn_indices.size()));
-        num_source.setZero();
-
-        for (int j = 0; j < nn_normals.cols(); j++)
-        {
-          int r = rand() % nn_indices.size();
-          while (isnan(cloud->points[nn_indices[r]].x))
-          {
-            r = rand() % nn_indices.size();
-          }
-          nn_normals.col(j) = cloud_normals_.col(nn_indices[r]);
-
-          for (int cam_idx = 0; cam_idx < camera_source.rows(); cam_idx++)
-          {
-            if (camera_source(cam_idx, nn_indices[r]) == 1)
-              num_source(cam_idx)++;
-          }
-        }
-
-        // calculate camera source for majority of points
-        int majority_cam_source;
-        num_source.maxCoeff(&majority_cam_source);
-
-        Eigen::MatrixXd gradient_magnitude = ((nn_normals.cwiseProduct(nn_normals)).colwise().sum()).cwiseSqrt();
-        nn_normals = nn_normals.cwiseQuotient(gradient_magnitude.replicate(3, 1));
-        Quadric* quadric = new Quadric(T_cams, sample.getVector3fMap().cast<double>(), majority_cam_source);
-        quadric->findAverageNormalAxis(nn_normals);
-        quadric_list[i] = quadric;
-  //      quadric_list[i]->print();
-      }
-    }
-
-    double delt1 = omp_get_wtime();
-    std::vector<Quadric> quadrics;
-    for (int i = 0; i < quadric_list.size(); i++)
-    {
-      if (quadric_list[i])
-        quadrics.push_back(*quadric_list[i]);
-      delete quadric_list[i];
-    }
-    quadric_list.clear();
-
-    double t2 = omp_get_wtime();
-    std::cout << "Deletion done in " << t2 - delt1 << " sec.\n";
-    std::cout << "Fitted " << quadrics.size() << " quadrics in " << t2 - t1 << " sec.\n";
-
-    return quadrics;
-}
-
-std::vector<Quadric> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
+std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
   double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
 {
   const int MIN_NEIGHBORS = 20;
 
     double t1 = omp_get_wtime();
-    std::vector<Quadric*> quadric_list(samples.cols());
+    std::vector<LocalFrame*> frames(samples.cols());
     std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d> > T_cams;
     std::vector<int> nn_indices;
     std::vector<float> nn_dists;
@@ -468,40 +293,39 @@ std::vector<Quadric> HandSearch::calculateLocalFrames(const CloudCamera& cloud_c
 
         Eigen::MatrixXd gradient_magnitude = ((nn_normals.cwiseProduct(nn_normals)).colwise().sum()).cwiseSqrt();
         nn_normals = nn_normals.cwiseQuotient(gradient_magnitude.replicate(3, 1));
-        Quadric* quadric = new Quadric(T_cams, sample.getVector3fMap().cast<double>(), majority_cam_source);
-        quadric->findAverageNormalAxis(nn_normals);
-        quadric_list[i] = quadric;
-  //      quadric_list[i]->print();
+        LocalFrame* frame = new LocalFrame(T_cams, sample.getVector3fMap().cast<double>(), majority_cam_source);
+        frame->findAverageNormalAxis(nn_normals);
+        frames[i] = frame;
+  //      frame[i]->print();
       }
     }
 
     double delt1 = omp_get_wtime();
-    std::vector<Quadric> quadrics;
-    for (int i = 0; i < quadric_list.size(); i++)
+    std::vector<LocalFrame> frames_out;
+    for (int i = 0; i < frames.size(); i++)
     {
-      if (quadric_list[i])
-        quadrics.push_back(*quadric_list[i]);
-      delete quadric_list[i];
+      if (frames[i])
+        frames_out.push_back(*frames[i]);
+      delete frames[i];
     }
-    quadric_list.clear();
+    frames.clear();
 
     double t2 = omp_get_wtime();
-    std::cout << "Deletion done in " << t2 - delt1 << " sec.\n";
-    std::cout << "Fitted " << quadrics.size() << " quadrics in " << t2 - t1 << " sec.\n";
+    std::cout << "Fitted " << frames_out.size() << " local reference frames in " << t2 - t1 << " sec.\n";
 
-    return quadrics;
+    return frames_out;
 }
 
 std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& points, const Eigen::Matrix3Xd& normals,
-  const Eigen::MatrixXi& cam_source, const Quadric& quadric, const Eigen::VectorXd& angles)
+  const Eigen::MatrixXi& cam_source, const LocalFrame& local_frame, const Eigen::VectorXd& angles)
 {
   FingerHand finger_hand(finger_width_, hand_outer_diameter_, hand_depth_);
 
-  // local quadric frame
+  // extract axes of local reference frame
   Eigen::Matrix3d frame;
-  frame << quadric.getNormal(), quadric.getBinormal(), quadric.getCurvatureAxis();
+  frame << local_frame.getNormal(), local_frame.getBinormal(), local_frame.getCurvatureAxis();
 
-  // transform points into quadric frame and crop them based on <hand_height>
+  // transform points into local reference frame and crop them based on <hand_height>
   Eigen::Matrix3Xd points_frame = frame.transpose() * points;
   std::vector<int> indices(points_frame.cols());
   int k = 0;
@@ -555,7 +379,7 @@ std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& p
           std::cout << "#pts_rot: " << points_rot.size() << ", #indices_learning: " << indices_learning.size() << "\n";
           continue;
         }
-        Eigen::MatrixXd grasp_pos = finger_hand.calculateGraspParameters(frame_rot, quadric.getSample());
+        Eigen::MatrixXd grasp_pos = finger_hand.calculateGraspParameters(frame_rot, local_frame.getSample());
         Eigen::Vector3d binormal = frame_rot.col(0);
         Eigen::Vector3d approach = frame_rot.col(1);
         Eigen::Vector3d axis = frame_rot.col(2);

@@ -2,7 +2,7 @@
 <package>
   <name>agile_grasp2</name>
   <version>1.0.0</version>
-  <description>The agile_grasp ROS package. AGILE stands for Antipodal Grasp Identification and LEarning. The package 
+  <description>The agile_grasp 2 ROS package. AGILE stands for Antipodal Grasp Identification and LEarning. The package 
   finds antipodal grasps in point clouds.</description>
   <maintainer email="atp@ccs.neu.edu">Andreas ten Pas</maintainer>
   <license>BSD</license>
@@ -15,7 +15,6 @@
 	<build_depend>cv_bridge</build_depend>
   <build_depend>eigen_conversions</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>liblapack-dev</build_depend>
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>message_generation</build_depend>   
   <build_depend>roscpp</build_depend>
@@ -28,7 +27,6 @@
   <run_depend>cv_bridge</run_depend>
   <run_depend>eigen_conversions</run_depend>
   <run_depend>geometry_msgs</run_depend>
-  <run_depend>liblapack-dev</run_depend>
   <run_depend>libpcl-all</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>pcl_conversions</run_depend>

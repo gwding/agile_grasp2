@@ -31,7 +31,6 @@ GraspDetector::GraspDetector(ros::NodeHandle& node) : use_incoming_samples_(fals
   node.param("nn_radius_taubin", params.nn_radius_taubin_, 0.01);
   node.param("nn_radius_hands", params.nn_radius_hands_, 0.1);
   node.param("num_orientations", params.num_orientations_, 8);
-  node.param("normal_estimation_method", params.normal_estimation_method_, 0);
   node.param("voxelize", voxelize_, true);
   node.param("filter_half_grasps", filter_half_grasps_, true);
 

@@ -46,8 +46,8 @@
 #include <agile_grasp2/cloud_camera.h>
 #include <agile_grasp2/finger_hand.h>
 #include <agile_grasp2/grasp_hypothesis.h>
+#include <agile_grasp2/local_frame.h>
 #include <agile_grasp2/plot.h>
-#include <agile_grasp2/quadric.h>
 
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
@@ -57,10 +57,9 @@ typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
  *
  * \brief Search for grasp hypotheses.
  * 
- * This class searches for grasp hypotheses in a point cloud by first calculating a local reference frame
- * for a small point neighborhood, and then finding geometrically feasible grasp hypotheses for
- * a larger point neighborhood. It can also estimate whether the grasp is antipodal from the normals of 
- * the point neighborhood.
+ * This class searches for grasp hypotheses in a point cloud by first calculating a local reference frame for a small
+ * point neighborhood, and then finding geometrically feasible grasp hypotheses for a larger point neighborhood. It
+ * can also estimate whether the grasp is antipodal from the normals of the point neighborhood.
  * 
 */
 class HandSearch
@@ -72,18 +71,16 @@ class HandSearch
     */
     struct Parameters
     {
-      /** quadric fit parameters */
-      double nn_radius_taubin_;
+      /** local reference frame estimation parameters */
+      double nn_radius_taubin_; ///< local reference frame radius for point neighborhood search
 
       /** grasp hypotheses generation */
-      int normal_estimation_method_; ///< the normal estimation method (see constants at end of file)
       int num_threads_; ///< the number of CPU threads to be used for the hypothesis generation
-      int num_samples_; ///< the number of samples drawn from the point cloud
-      int num_clouds_;
-      Eigen::Matrix4d cam_tf_left_;
-      Eigen::Matrix4d cam_tf_right_;
-      double nn_radius_hands_;
-      int num_orientations_;
+      int num_samples_; ///< the number of samples drawn from the point clouds;
+      Eigen::Matrix4d cam_tf_left_; ///< pose of the left camera
+      Eigen::Matrix4d cam_tf_right_; ///< pose of the right camera
+      double nn_radius_hands_; ///< grasp hypothesis radius for point neighborhood search
+      int num_orientations_; ///< number of hand orientations to evaluate
 
       /** robot hand geometry */
       double finger_width_; ///< the width of the robot hand fingers
@@ -93,7 +90,7 @@ class HandSearch
       double init_bite_; ///< the minimum object height
     };
     
-    HandSearch() : uses_determinstic_normal_estimation_(false), plots_camera_sources_(false), plots_local_axes_(false)
+    HandSearch() : plots_camera_sources_(false), plots_local_axes_(false)
       { }
 
     HandSearch(Parameters params) : cam_tf_left_(params.cam_tf_left_), cam_tf_right_(params.cam_tf_right_),
@@ -102,7 +99,7 @@ class HandSearch
       num_threads_(params.num_threads_), num_samples_(params.num_samples_),
       nn_radius_taubin_(params.nn_radius_taubin_), nn_radius_hands_(params.nn_radius_hands_),
       num_orientations_(params.num_orientations_), plots_samples_(false), plots_local_axes_(false),
-      plots_camera_sources_(false), uses_determinstic_normal_estimation_(false) { }
+      plots_camera_sources_(false) { }
 
     /**
 		 * \brief Constructor.
@@ -117,8 +114,8 @@ class HandSearch
     HandSearch(double finger_width, double hand_outer_diameter, double hand_depth, double hand_height, double init_bite,
       int num_threads, int num_samples) : finger_width_(finger_width), hand_outer_diameter_(hand_outer_diameter), 
       hand_depth_(hand_depth), hand_height_(hand_height), init_bite_(init_bite), num_threads_(num_threads), 
-      num_samples_(num_samples), plots_samples_(false), plots_local_axes_(false), 
-      uses_determinstic_normal_estimation_(false), nn_radius_taubin_(0.03), nn_radius_hands_(0.08) { }
+      num_samples_(num_samples), plots_samples_(false), plots_local_axes_(false), nn_radius_taubin_(0.03),
+      nn_radius_hands_(0.08) { }
     
     std::vector<GraspHypothesis> generateHypotheses(const CloudCamera& cloud_cam, int antipodal_mode, bool use_samples,
       bool forces_PSD = false, bool plots_normals = false, bool plots_samples = false);
@@ -143,23 +140,17 @@ class HandSearch
 
     void calculateNormalsOMP(const CloudCamera& cloud_cam);
 
-    std::vector<Quadric> calculateLocalFrames(const CloudCamera& cloud_cam, const std::vector<int>& indices,
+    std::vector<LocalFrame> calculateLocalFrames(const CloudCamera& cloud_cam, const std::vector<int>& indices,
       double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree);
 
-    std::vector<Quadric> calculateLocalFrames(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
+    std::vector<LocalFrame> calculateLocalFrames(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
       double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree);
 
-    std::vector<Quadric> fitQuadrics(const CloudCamera& cloud_cam, const std::vector<int>& indices, double radius,
-      const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree, bool calculates_normals = false, bool forces_PSD = false);
-
-    std::vector<Quadric> fitQuadrics(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples, double radius,
-          const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree, bool calculates_normals = false, bool forces_PSD = false);
-
-    std::vector<GraspHypothesis> evaluateHands(const CloudCamera& cloud_cam, const std::vector<Quadric>& quadric_list,
+    std::vector<GraspHypothesis> evaluateHands(const CloudCamera& cloud_cam, const std::vector<LocalFrame>& frames,
       double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree);
 
     std::vector<GraspHypothesis> calculateHand(const Eigen::Matrix3Xd& points, const Eigen::Matrix3Xd& normals,
-      const Eigen::MatrixXi& cam_source, const Quadric& quadric, const Eigen::VectorXd& angles);
+      const Eigen::MatrixXi& cam_source, const LocalFrame& local_frame, const Eigen::VectorXd& angles);
 
     Eigen::Matrix4d cam_tf_left_, cam_tf_right_; ///< camera poses
     
@@ -177,21 +168,14 @@ class HandSearch
     double nn_radius_taubin_; ///< the radius for the neighborhood search for the quadratic surface fit
     double nn_radius_hands_; ///< the radius for the neighborhood search for the hand search
     int antipodal_method_; ///< the antipodal calculation method (see the constants below)
-    int normal_estimation_method_; ///< the normal estimation method (see the constants below)
     
     Eigen::Matrix3Xd cloud_normals_; ///< a 3xn matrix containing the normals for points in the point cloud
     Plot plot_; ///< plot object for visualization of search results
-    
-    bool uses_determinstic_normal_estimation_; ///< is the normal estimation for the quadratic surface deterministic?
     
     /** plotting parameters (optional, not read in from ROS launch file) **/
     bool plots_samples_; ///< are the samples drawn from the point cloud plotted?
     bool plots_camera_sources_; ///< is the camera source for each point in the point cloud plotted?
     bool plots_local_axes_; ///< are the local axes estimated for each point neighborhood plotted?
-
-    /** constants for antipodal calculation */
-    static const int NORMAL_ESTIMATION_QUADRICS = 0; ///< normal estimation using quadrics
-    static const int NORMAL_ESTIMATION_OMP = 1; ///< normal estimation using pcl::NormalEstimationOMP
 };
 
 #endif /* HAND_SEARCH_H */ 

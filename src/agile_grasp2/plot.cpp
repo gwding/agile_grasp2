@@ -268,7 +268,7 @@ void Plot::plotNormals(const PointCloudRGBA::Ptr& cloud, const Eigen::Matrix3Xd&
 }
 
 
-void Plot::plotLocalAxes(const std::vector<Quadric>& quadric_list, const PointCloudRGBA::Ptr& cloud)
+void Plot::plotLocalAxes(const std::vector<LocalFrame>& quadric_list, const PointCloudRGBA::Ptr& cloud)
 {
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = createViewer("Local Axes");
 	viewer->addPointCloud<pcl::PointXYZRGBA>(cloud, "registered point cloud");

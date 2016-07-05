@@ -2,68 +2,48 @@
 	<node name="detect_grasps_file" pkg="agile_grasp2" type="detect_grasps_file" output="screen">
     <param name="cloud_type" value="0" /> <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
 <!--
-    <param name="cloud_file_name" value="/home/baxter/data/active_sensing_comparison/1/active-comparison-run-1-plan-1-2016-04-14-17-56.pcd" /> 
--->
-<!--
-    <param name="cloud_file_name" value="/home/baxter/data/active_sensing_comparison/0/active-comparison-run-0-plan-0-2016-04-14-17-56.pcd" /> 
--->
-<!--
     <param name="cloud_file_name" value="/home/baxter/data/valkyrie/brush.pcd" /> 
 -->
-    <param name="cloud_file_name" value="/home/andreas/data/agile_grasp/test_march2015/2cams_9.pcd" /> 
+    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train10.pcd" /> 
+
+    <!-- Plotting -->
     <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
-    <param name="save_hypotheses" value="false" />
-    <param name="voxelize" value="true"/>
-    <param name="filter_half_grasps" value="true"/>
-      
-    <!-- Hand Search -->
-    <rosparam param="workspace"> [0.57, 0.87, -0.3, 0.15, -0.25, 1] </rosparam>
-<!--
-    <rosparam param="workspace"> [-0.2, 0.2, -0.9, 0.3, 0.3, 0.8] </rosparam>
--->
-<!--
-    <rosparam param="camera_pose"> [0, 0.445417,  0.895323,  0.215, 
-                                    1, 0,         0,        -0.015, 
-                                    0, 0.895323, -0.445417,  0.23, 
-                                    0, 0,         0,         1] </rosparam>
--->
-    <rosparam param="camera_pose"> [1, 0, 0, 0, 
-                                    0, 1, 0, 0, 
-                                    0, 0, 0, 0, 
-                                    0, 0, 0, 1] </rosparam>
-    <param name="num_samples" value="20000" />
-    <param name="num_threads" value="4" />
-<!--
-    <rosparam param="sample_indices">[3383, 4141, 7667]</rosparam>
--->
-    <rosparam param="sample_indices">[]</rosparam>
-<!--
+            
+    <!-- Hand Search -->    
+<!-- <rosparam param="workspace"> [0.48, 0.96, -0.38, 0.0, -0.25, 1] </rosparam> --> <!-- clutter -->
+    <rosparam param="workspace"> [0.48, 0.92, -0.6, 0.4, -0.25, 1] </rosparam>
+    <rosparam param="camera_pose"> [] </rosparam>
+    <param name="num_samples" value="5000" />
+    <param name="num_threads" value="4" />    
     <param name="nn_radius_taubin" value="0.01" />
--->
-    <param name="voxelize" value="true" />
-    <param name="nn_radius_taubin" value="0.005" />
-    <param name="nn_radius_hands" value="0.10" />
+    <param name="nn_radius_hands" value="0.1" />
     <param name="num_orientations" value="8" />
-    <param name="predict_antipodal" value="true" />
+    <param name="antipodal_mode" value="1" /> <!-- 0: use hypotheses, 1: predict antipodal graps, 2: calculate antipodal grasps -->
     <param name="normal_estimation_method" value="1" /> <!-- 0: quadrics, 1: pcl::NormalEstimationOMP -->
+    <param name="voxelize" value="true"/>
+    <param name="filter_half_grasps" value="false"/>
+    <param name="gripper_width_range" value="[0.03, 0.08]" />
     
     <!-- Hand Geometry -->
     <param name="finger_width" value="0.01" />
     <param name="hand_outer_diameter" value="0.09" />
     <param name="hand_depth" value="0.06" />
     <param name="hand_height" value="0.02" />
-    <param name="init_bite" value="0.015" />
+    <param name="init_bite" value="0.01" />
     
     <!-- Classifier -->
     <param name="images_directory" value="/home/andreas/data/grasp_images/" />
     <param name="model_file" value="$(find agile_grasp2)/caffe/test_1batch2.prototxt" />
     <param name="trained_file" value="$(find agile_grasp2)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
-    <param name="min_score_diff" value="800" />
+    <param name="min_score_diff" value="300" />
+    <param name="batch_size" value="100" />
+    
+    <!-- Clustering -->
+    <param name="min_inliers" value="5" />
     
     <!-- Grasp Selection -->
-    <param name="num_selected" value="300" />
-    <param name="gripper_width_range" value="[0.03, 0.08]" />
+    <param name="num_selected" value="20" /> 
 	</node>
 </launch>
