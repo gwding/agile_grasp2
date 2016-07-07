@@ -81,7 +81,7 @@ GraspDetector::GraspDetector(ros::NodeHandle& node) : use_incoming_samples_(fals
 }
 
 
-std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& cloud_cam)
+std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& cloud_cam, bool clusters_grasps)
 {
   if (cloud_cam.getCloudOriginal()->size() == 0)
   {
@@ -226,7 +226,7 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   }
 
   // 4. Find grasp clusters.
-  if (handle_search_.getMinInliers() > 0)
+  if (clusters_grasps && handle_search_.getMinInliers() > 0)
   {
     antipodal_hands = handle_search_.findClusters(antipodal_hands);
     if (!only_plot_output_ && plot_mode_ == PCL)
@@ -260,7 +260,6 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   {
     std::cout << "grasp " << i << ", score: " << hands_selected[i].getScore() << "\n";
   }
-
 
   // randomly subsample the highest-scoring grasps
   //  std::vector<int> seq(antipodal_hands.size());

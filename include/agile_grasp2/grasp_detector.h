@@ -79,7 +79,7 @@ public:
     delete learning_;
   }
 
-  std::vector<GraspHypothesis> detectGraspPoses(const CloudCamera& cloud_cam);
+  std::vector<GraspHypothesis> detectGraspPoses(const CloudCamera& cloud_cam, bool clusters_grasps = true);
 
   void preprocessPointCloud(CloudCamera& cloud_cam);
 
@@ -120,6 +120,10 @@ public:
     num_samples_ = num_samples;
   }
 
+  HandleSearch& getHandleSearch()
+  {
+    return handle_search_;
+  }
 
 private:
 

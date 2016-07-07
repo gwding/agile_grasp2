@@ -53,6 +53,7 @@
 #include <agile_grasp2/grasp_detector.h>
 #include <agile_grasp2/hand_search.h>
 #include <agile_grasp2/handle_search.h>
+#include <agile_grasp2/importance_sampling.h>
 #include <agile_grasp2/learning.h>
 #include <agile_grasp2/plot.h>
 
@@ -82,25 +83,58 @@ class GraspDetectionNode
 {
 public:
   
+  /**
+   * \brief Constructor.
+   * \param node the ROS node
+  */
   GraspDetectionNode(ros::NodeHandle& node);
 
+  /**
+   * \brief Destructor.
+  */
   ~GraspDetectionNode()
   {
     delete grasp_detector_;
+    delete importance_sampling_;
   }
 
+  /**
+   * \brief Run the ROS node. Loops while waiting for incoming ROS messages.
+  */
   void run();
 
+  /**
+   * \brief Detect grasp poses in a point cloud loaded from two *.pcd files.
+   * \param file_name_left the location of the file that contains the point cloud from the left camera
+   * \param file_name_left the location of the file that contains the point cloud from the right camera
+   * \return the list of grasp poses
+  */
   std::vector<GraspHypothesis> detectGraspPosesInFile(const std::string& file_name_left,
     const std::string& file_name_right);
 
+  /**
+   * \brief Detect grasp poses in a point cloud received from a ROS topic.
+   * \return the list of grasp poses
+  */
   std::vector<GraspHypothesis> detectGraspPosesInTopic();
 
 
 private:
 
+  /**
+   * \brief Find the indices of the points within a ball around a given point in the cloud.
+   * \param cloud the point cloud
+   * \param centroid the centroid of the ball
+   * \param radius the radius of the ball
+   * \return the indices of the points in the point cloud that lie within the ball
+  */
   std::vector<int> getSamplesInBall(const PointCloudRGBA::Ptr& cloud, const pcl::PointXYZRGBA& centroid, float radius);
 
+  /** Callback for the grasps ROS service.
+   * \param req the service request
+   * \param resp the service response
+   * \return true if grasps were found, false otherwise
+  */
   bool graspsServiceCallback(agile_grasp2::FindGrasps::Request& req, agile_grasp2::FindGrasps::Response& resp);
 
   /**
@@ -110,33 +144,50 @@ private:
   void cloud_callback(const sensor_msgs::PointCloud2ConstPtr& msg);
 
   /**
-   * \brief Callback function for the ROS topic that contains the input point cloud.
+   * \brief Callback function for the ROS topic that contains the input point cloud and the size of the left cloud.
    * \param msg the incoming ROS message
   */
   void cloud_sized_callback(const agile_grasp2::CloudSized& msg);
 
   /**
-   * \brief Callback function for the ROS topic that contains the input point cloud.
-   * \param msg the incoming ROS message (of type agile_grasp2/CloudSized)
+   * \brief Callback function for the ROS topic that contains the input point cloud and a list of indices.
+   * \param msg the incoming ROS message
   */
   void cloud_indexed_callback(const agile_grasp2::CloudIndexed& msg);
   
+  /**
+   * \brief Callback function for the ROS topic that contains the input samples.
+   * \param msg the incoming ROS message
+  */
   void samples_callback(const agile_grasp2::SamplesMsg& msg);
 
+  /**
+   * \brief Create a ROS message that contains a list of grasp poses from a list of handles.
+   * \param handles the list of handles
+   * \return the ROS message that contains the grasp poses
+  */
   agile_grasp2::GraspListMsg createGraspListMsg(const std::vector<Handle>& handles);
 
+  /**
+   * \brief Create a ROS message that contains a list of grasp poses from a list of handles.
+   * \param hands the list of grasps
+   * \return the ROS message that contains the grasp poses
+  */
   agile_grasp2::GraspListMsg createGraspListMsg(const std::vector<GraspHypothesis>& hands);
 
-  PointCloudRGBA::Ptr cloud_;
-  PointCloudNormal::Ptr cloud_normals_;
-  int size_left_cloud_;
-  bool has_cloud_, has_normals_, has_samples_;
-  ros::Subscriber cloud_sub_;
-  ros::Subscriber samples_sub_;
-  ros::Publisher grasps_pub_;
-  ros::ServiceServer grasps_service_;
+  PointCloudRGBA::Ptr cloud_; ///< input point cloud without normals
+  PointCloudNormal::Ptr cloud_normals_; ///< input point cloud with normals
+  int size_left_cloud_; ///< size of the left point cloud (when using two point clouds as input)
+  bool has_cloud_, has_normals_, has_samples_; ///< status variables for received messages
+  ros::Subscriber cloud_sub_; ///< ROS subscriber for point cloud messages
+  ros::Subscriber samples_sub_; ///< ROS publisher for samples messages
+  ros::Publisher grasps_pub_; ///< ROS publisher for grasp list messages
+  ros::ServiceServer grasps_service_; ///< grasps ROS service (untested)
 
-  GraspDetector* grasp_detector_;
+  bool use_importance_sampling_; ///< if importance sampling is used
+
+  GraspDetector* grasp_detector_; ///< used to run the grasp pose detection
+  ImportanceSampling* importance_sampling_; ///< sequential importance sampling variation of grasp pose detection
 
   /** constants for input point cloud types */
   static const int PCD_FILE; ///< *.pcd file

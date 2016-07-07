@@ -16,6 +16,9 @@ const int GraspDetectionNode::INDICES = 2; ///< service uses all points which ar
 GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false), has_normals_(false),
   cloud_(new PointCloudRGBA), cloud_normals_(new PointCloudNormal), size_left_cloud_(0), has_samples_(true)
 {
+  node.param("use_importance_sampling", use_importance_sampling_, false);
+
+  importance_sampling_ = new ImportanceSampling(node);
   grasp_detector_ = new GraspDetector(node);
 
   int cloud_type;
@@ -96,17 +99,24 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPosesInFile(const st
   const std::string& file_name_right)
 {
   CloudCamera* cloud_cam;
+
+  // load point cloud from file(s)
   if (file_name_right.length() == 0)
     cloud_cam = new CloudCamera(file_name_left);
   else
     cloud_cam = new CloudCamera(file_name_left, file_name_right);
 
   grasp_detector_->preprocessPointCloud(*cloud_cam);
-  std::vector<GraspHypothesis> handles = grasp_detector_->detectGraspPoses(*cloud_cam);
+
+  std::vector<GraspHypothesis> grasps;
+  if (use_importance_sampling_)
+    grasps = importance_sampling_->detectGraspPoses(*cloud_cam);
+  else
+    grasps = grasp_detector_->detectGraspPoses(*cloud_cam);
 
   delete cloud_cam;
 
-  return handles;
+  return grasps;
 }
 
 
@@ -121,8 +131,11 @@ std::vector<GraspHypothesis> GraspDetectionNode::detectGraspPosesInTopic()
   else
     cloud_cam = new CloudCamera(cloud_, size_left_cloud_);
   
-  grasp_detector_->preprocessPointCloud(*cloud_cam);
-  std::vector<GraspHypothesis> grasps = grasp_detector_->detectGraspPoses(*cloud_cam);
+  std::vector<GraspHypothesis> grasps;
+  if (use_importance_sampling_)
+    grasps = importance_sampling_->detectGraspPoses(*cloud_cam);
+  else
+    grasps = grasp_detector_->detectGraspPoses(*cloud_cam);
   
   delete cloud_cam;
 

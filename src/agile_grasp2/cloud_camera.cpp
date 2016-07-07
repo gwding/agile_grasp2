@@ -249,3 +249,9 @@ void CloudCamera::setSamples(const agile_grasp2::SamplesMsg& msg)
     samples_.col(i) << msg.samples[i].x, msg.samples[i].y, msg.samples[i].z;
   }
 }
+
+
+void CloudCamera::setSamples(const Eigen::Matrix3Xd& samples)
+{
+  samples_ = samples;
+}

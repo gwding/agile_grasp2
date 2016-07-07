@@ -87,6 +87,7 @@ catkin_package(
   hand_search
   handle
   handle_search
+  importance_sampling
   learning
   local_frame
   plot
@@ -129,9 +130,10 @@ add_library(grasp_hypothesis src/${PROJECT_NAME}/grasp_hypothesis.cpp)
 add_library(hand_search src/${PROJECT_NAME}/hand_search.cpp)
 add_library(handle src/${PROJECT_NAME}/handle.cpp)
 add_library(handle_search src/${PROJECT_NAME}/handle_search.cpp)
+add_library(importance_sampling src/${PROJECT_NAME}/importance_sampling.cpp)
 add_library(learning src/${PROJECT_NAME}/learning.cpp)
-add_library(plot src/${PROJECT_NAME}/plot.cpp)
 add_library(local_frame src/${PROJECT_NAME}/local_frame.cpp)
+add_library(plot src/${PROJECT_NAME}/plot.cpp)
 
 ## Declare a cpp executable
 add_executable(classify_grasps src/nodes/classify_grasps.cpp)
@@ -149,8 +151,8 @@ target_link_libraries(cloud_camera ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(detect_grasps_file grasp_detection_node ${PCL_LIBRARIES})
 target_link_libraries(detect_grasps grasp_detection_node ${PCL_LIBRARIES})
 target_link_libraries(gpd_classification ${Caffe_LIBRARIES})
-target_link_libraries(grasp_detection_node caffe_classifier cloud_camera grasp_detector hand_search handle_search learning plot 
-  ${PCL_LIBRARIES})
+target_link_libraries(grasp_detection_node caffe_classifier cloud_camera grasp_detector hand_search handle_search
+ importance_sampling learning plot ${PCL_LIBRARIES})
 target_link_libraries(grasp_detector caffe_classifier cloud_camera hand_search handle_search learning plot 
   ${PCL_LIBRARIES})
 target_link_libraries(grasp_hypothesis ${catkin_LIBRARIES})
@@ -160,6 +162,7 @@ target_link_libraries(learning grasp_hypothesis handle ${OpenCV_LIBRARIES})
 target_link_libraries(handle_search handle ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(plot grasp_hypothesis handle local_frame ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(local_frame ${PCL_LIBRARIES})
+target_link_libraries(importance_sampling grasp_detector grasp_hypothesis ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(test_cnn caffe_classifier cloud_camera hand_search handle_search learning plot ${PCL_LIBRARIES})
 
 

@@ -4,18 +4,18 @@
 <!--
     <param name="cloud_file_name" value="/home/baxter/data/valkyrie/brush.pcd" /> 
 -->
-    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train10.pcd" />
-    <param name="use_importance_sampling" value="false" />
+    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train0.pcd" />
+    <param name="use_importance_sampling" value="true" />
 
     <!-- Plotting -->
-    <param name="plot_mode" value="1" /> <!-- 0: none, 1: PCL, 2: rviz -->
+    <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
     <param name="only_plot_output" value="true" />
             
     <!-- Hand Search -->    
 <!-- <rosparam param="workspace"> [0.48, 0.96, -0.38, 0.0, -0.25, 1] </rosparam> --> <!-- clutter -->
     <rosparam param="workspace"> [0.48, 0.92, -0.6, 0.4, -0.25, 1] </rosparam>
     <rosparam param="camera_pose"> [] </rosparam>
-    <param name="num_samples" value="5000" />
+    <param name="num_samples" value="100" />
     <param name="num_threads" value="4" />    
     <param name="nn_radius_taubin" value="0.01" />
     <param name="nn_radius_hands" value="0.1" />
@@ -38,7 +38,7 @@
     <param name="model_file" value="$(find agile_grasp2)/caffe/test_1batch2.prototxt" />
     <param name="trained_file" value="$(find agile_grasp2)/caffe/bottles_boxes_cans_5xNeg.caffemodel" />
     <param name="label_file" value="$(find agile_grasp2)/caffe/labels.txt" />
-    <param name="min_score_diff" value="300" />
+    <param name="min_score_diff" value="100" />
     <param name="batch_size" value="100" />
     
     <!-- Clustering -->

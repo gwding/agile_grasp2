@@ -44,6 +44,7 @@
 #include <pcl/filters/random_sample.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 
 #include <ros/ros.h>
 
@@ -134,6 +135,8 @@ public:
   }
 
   void setSamples(const agile_grasp2::SamplesMsg& msg);
+
+  void setSamples(const Eigen::Matrix3Xd& samples);
 
 
 private:
