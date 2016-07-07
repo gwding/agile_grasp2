@@ -7,9 +7,9 @@ const int MAX = 2; // max of Gaussians
 
 // standard parameters
 const int ImportanceSampling::NUM_ITERATIONS = 5;
-const int ImportanceSampling::NUM_SAMPLES = 100;
+const int ImportanceSampling::NUM_SAMPLES = 50;
 const int ImportanceSampling::NUM_INIT_SAMPLES = 100;
-const double ImportanceSampling::PROB_RAND_SAMPLES = 0.1;
+const double ImportanceSampling::PROB_RAND_SAMPLES = 0.3;
 const double ImportanceSampling::RADIUS = 0.02;
 const bool ImportanceSampling::VISUALIZE_STEPS = false;
 const int ImportanceSampling::METHOD = MAX;
@@ -31,6 +31,8 @@ std::vector<GraspHypothesis> ImportanceSampling::detectGraspPoses(const CloudCam
 {
   double t0 = omp_get_wtime();
   CloudCamera cloud_cam = cloud_cam_in;
+  Plot plotter;
+  const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
 
   // 1. Find initial grasp hypotheses.
   std::vector<GraspHypothesis> hands = GraspDetector::detectGraspPoses(cloud_cam, false);
@@ -39,11 +41,15 @@ std::vector<GraspHypothesis> ImportanceSampling::detectGraspPoses(const CloudCam
   {
     return hands;
   }
+  if (VISUALIZE_STEPS)
+  {
+    plotter.plotFingers(hands, cloud_cam.getCloudOriginal(), "Initial Grasps");
+  }
 
   // 2. Create random generator for normal distribution.
   int num_rand_samples = prob_rand_samples_ * num_samples_;
   int num_gauss_samples = num_samples_ - num_rand_samples;
-  double sigma = 2.0 * radius_;
+  double sigma = radius_;
   Eigen::Matrix3d diag_sigma = Eigen::Matrix3d::Zero();
   diag_sigma.diagonal() << sigma, sigma, sigma;
   Eigen::Matrix3d inv_sigma = diag_sigma.inverse();
@@ -59,50 +65,17 @@ std::vector<GraspHypothesis> ImportanceSampling::detectGraspPoses(const CloudCam
   {
     std::cout << i << " " << num_gauss_samples << std::endl;
 
-    // draw samples close to affordances (importance sampling)
+    // 3.1 Draw samples close to affordances (importance sampling).
     if (this->sampling_method_ == SUM)
     {
-      for (std::size_t j = 0; j < num_gauss_samples; j++)
-      {
-        int idx = rand() % hands.size();
-        samples(0, j) = hands[idx].getGraspSurface()(0) + generator() * sigma;
-        samples(1, j) = hands[idx].getGraspSurface()(1) + generator() * sigma;
-        samples(2, j) = hands[idx].getGraspSurface()(2) + generator() * sigma;
-      }
+      drawSamplesFromSumOfGaussians(hands, generator, sigma, num_gauss_samples, samples);
     }
     else // max of Gaussians
     {
-      int j = 0;
-      while (j < num_gauss_samples) // draw samples using rejection sampling
-      {
-        // draw from sum of Gaussians
-        int idx = rand() % hands.size();
-        Eigen::Vector3d x;
-        x(0) = hands[idx].getGraspSurface()(0) + generator() * sigma;
-        x(1) = hands[idx].getGraspSurface()(1) + generator() * sigma;
-        x(2) = hands[idx].getGraspSurface()(2) + generator() * sigma;
-
-        double maxp = 0;
-        for (std::size_t k = 0; k < hands.size(); k++)
-        {
-          double p = (x - hands[k].getGraspSurface()).transpose() * (x - hands[k].getGraspSurface());
-          p = term * exp((-1.0 / (2.0 * sigma)) * p);
-          if (p > maxp)
-            maxp = p;
-        }
-
-        double p = (x - hands[idx].getGraspSurface()).transpose() * (x - hands[idx].getGraspSurface());
-        p = term * exp((-1.0 / (2.0 * sigma)) * p);
-        if (p >= maxp)
-        {
-          samples.col(j) = x;
-          j++;
-        }
-      }
+      drawSamplesFromMaxOfGaussians(hands, generator, sigma, num_gauss_samples, samples, term);
     }
 
-    // draw random samples
-    const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
+    // 3.2 Draw random samples.
     for (int j = num_samples_ - num_rand_samples; j < num_samples_; j++)
     {
       int r = std::rand() % cloud->points.size();
@@ -112,17 +85,21 @@ std::vector<GraspHypothesis> ImportanceSampling::detectGraspPoses(const CloudCam
       samples.col(j) = cloud->points[r].getVector3fMap().cast<double>();
     }
 
-    // evaluate grasp hypotheses at <samples>
+    // 3.3 Evaluate grasp hypotheses at <samples>.
     cloud_cam.setSamples(samples);
     std::vector<GraspHypothesis> hands_new = GraspDetector::detectGraspPoses(cloud_cam, false);
     hands.insert(hands.end(), hands_new.begin(), hands_new.end());
     std::cout << "Added/total: " << hands_new.size() << "/" << hands.size() << " grasp hypotheses in round " << i
       << std::endl;
+
+    if (VISUALIZE_STEPS)
+    {
+      plotter.plotSamples(samples, cloud);
+    }
   }
 
   std::cout << "Found " << hands.size() << " grasp hypotheses in " << omp_get_wtime() - t0 << " sec.\n";
 
-  Plot plotter;
   plotter.plotFingers(hands, cloud_cam.getCloudOriginal(), "All Grasps");
 
   if (getHandleSearch().getMinInliers() > 0)
@@ -132,4 +109,49 @@ std::vector<GraspHypothesis> ImportanceSampling::detectGraspPoses(const CloudCam
   }
 
   return hands;
+}
+
+
+void ImportanceSampling::drawSamplesFromSumOfGaussians(const std::vector<GraspHypothesis>& hands,
+  Gaussian& generator, double sigma, int num_gauss_samples, Eigen::Matrix3Xd& samples_out)
+{
+  for (std::size_t j = 0; j < num_gauss_samples; j++)
+  {
+    int idx = rand() % hands.size();
+    samples_out(0, j) = hands[idx].getGraspSurface()(0) + generator() * sigma;
+    samples_out(1, j) = hands[idx].getGraspSurface()(1) + generator() * sigma;
+    samples_out(2, j) = hands[idx].getGraspSurface()(2) + generator() * sigma;
+  }
+}
+
+
+void ImportanceSampling::drawSamplesFromMaxOfGaussians(const std::vector<GraspHypothesis>& hands,
+  Gaussian& generator, double sigma, int num_gauss_samples, Eigen::Matrix3Xd& samples_out, double term)
+{
+  int j = 0;
+  while (j < num_gauss_samples) // draw samples using rejection sampling
+  {
+    int idx = rand() % hands.size();
+    Eigen::Vector3d x;
+    x(0) = hands[idx].getGraspSurface()(0) + generator() * sigma;
+    x(1) = hands[idx].getGraspSurface()(1) + generator() * sigma;
+    x(2) = hands[idx].getGraspSurface()(2) + generator() * sigma;
+
+    double maxp = 0;
+    for (std::size_t k = 0; k < hands.size(); k++)
+    {
+      double p = (x - hands[k].getGraspSurface()).transpose() * (x - hands[k].getGraspSurface());
+      p = term * exp((-1.0 / (2.0 * sigma)) * p);
+      if (p > maxp)
+        maxp = p;
+    }
+
+    double p = (x - hands[idx].getGraspSurface()).transpose() * (x - hands[idx].getGraspSurface());
+    p = term * exp((-1.0 / (2.0 * sigma)) * p);
+    if (p >= maxp)
+    {
+      samples_out.col(j) = x;
+      j++;
+    }
+  }
 }

@@ -15,6 +15,8 @@
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGB;
 
+typedef boost::variate_generator<boost::mt19937, boost::normal_distribution<> > Gaussian;
+
 
 class ImportanceSampling : public GraspDetector
 {
@@ -26,6 +28,12 @@ public:
 
 
 private:
+
+  void drawSamplesFromSumOfGaussians(const std::vector<GraspHypothesis>& hands, Gaussian& generator,
+    double sigma, int num_gauss_samples, Eigen::Matrix3Xd& samples_out);
+
+  void drawSamplesFromMaxOfGaussians(const std::vector<GraspHypothesis>& hands, Gaussian& generator, double sigma,
+    int num_gauss_samples, Eigen::Matrix3Xd& samples_out, double term);
 
   int num_iterations_;
   int num_samples_;

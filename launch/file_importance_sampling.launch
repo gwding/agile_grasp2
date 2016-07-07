@@ -4,7 +4,7 @@
 <!--
     <param name="cloud_file_name" value="/home/baxter/data/valkyrie/brush.pcd" /> 
 -->
-    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train0.pcd" />
+    <param name="cloud_file_name" value="/home/andreas/data/training_march2015/train10.pcd" />
     <param name="use_importance_sampling" value="true" />
 
     <!-- Plotting -->
